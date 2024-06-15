@@ -3,7 +3,7 @@ import inspect
 import logging
 from collections import defaultdict
 from functools import wraps
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 import grpc
@@ -14,7 +14,7 @@ import ray.dashboard.modules.log.log_consts as log_consts
 from ray._private import ray_constants
 from ray._private.gcs_utils import GcsAioClient
 from ray._private.utils import hex_to_binary
-from ray._raylet import ActorID, JobID, TaskID
+from ray._raylet import ActorID, JobID, NodeID, TaskID, WorkerID
 from ray.core.generated import gcs_service_pb2_grpc
 from ray.core.generated.gcs_pb2 import ActorTableData
 from ray.core.generated.gcs_service_pb2 import (
@@ -46,6 +46,7 @@ from ray.core.generated.runtime_env_agent_pb2 import (
     GetRuntimeEnvsInfoReply,
     GetRuntimeEnvsInfoRequest,
 )
+from ray.core.generated.common_pb2 import TaskType
 from ray.dashboard.datacenter import DataSource
 from ray.dashboard.modules.job.common import JobInfoStorageClient
 from ray.dashboard.modules.job.pydantic_models import JobDetails, JobType
@@ -55,6 +56,7 @@ from ray.util.state.common import (
     RAY_MAX_LIMIT_FROM_DATA_SOURCE,
     PredicateType,
     SupportedFilterType,
+    protobuf_message_to_dict,
 )
 from ray.util.state.exception import DataSourceUnavailable
 
@@ -162,6 +164,9 @@ class StateDataSourceClient:
         self._id_id_map = IdToIpMap()
         self._gcs_aio_client = gcs_aio_client
         self._client_session = aiohttp.ClientSession()
+        self._task_type_map = {
+            value.name: value.number for value in TaskType.DESCRIPTOR.values
+        }
 
     def register_gcs_client(self, gcs_channel: grpc.aio.Channel):
         self._gcs_actor_info_stub = gcs_service_pb2_grpc.ActorInfoGcsServiceStub(
@@ -307,6 +312,8 @@ class StateDataSourceClient:
                 req_filters.job_id = JobID(hex_to_binary(value)).binary()
             elif key == "task_id":
                 req_filters.task_ids.append(TaskID(hex_to_binary(value)).binary())
+            elif key == "type" and value in self._task_type_map:
+                req_filters.type = self._task_type_map[value]
             else:
                 continue
 
@@ -339,16 +346,57 @@ class StateDataSourceClient:
 
     @handle_grpc_network_errors
     async def get_all_worker_info(
-        self, timeout: int = None, limit: int = None
+        self,
+        timeout: int = None,
+        limit: int = None,
+        filters: Optional[List[Tuple[str, PredicateType, SupportedFilterType]]] = None,
     ) -> Optional[GetAllWorkerInfoReply]:
         if not limit:
             limit = RAY_MAX_LIMIT_FROM_DATA_SOURCE
 
-        request = GetAllWorkerInfoRequest(limit=limit)
+        if filters is None:
+            filters = []
+
+        req_filters = GetAllWorkerInfoRequest.Filters()
+        for filter in filters:
+            key, predicate, value = filter
+            if predicate != "=":
+                # We only support EQUAL predicate for source side filtering.
+                continue
+
+            if key == "worker_id":
+                req_filters.worker_id = WorkerID(hex_to_binary(value)).binary()
+            elif key == "node_id":
+                req_filters.node_id = NodeID(hex_to_binary(value)).binary()
+            elif key == "is_alive":
+                req_filters.is_alive = value
+            else:
+                continue
+
+        request = GetAllWorkerInfoRequest(limit=limit, filters=req_filters)
         reply = await self._gcs_worker_info_stub.GetAllWorkerInfo(
             request, timeout=timeout
         )
         return reply
+
+    @handle_grpc_network_errors
+    async def get_worker_info(
+        self, worker_id: str, timeout: int = None
+    ) -> Dict[str, Any]:
+        req_filters = GetAllWorkerInfoRequest.Filters()
+        req_filters.worker_id = WorkerID(hex_to_binary(worker_id)).binary()
+        request = GetAllWorkerInfoRequest(limit=10, filters=req_filters)
+        reply = await self._gcs_worker_info_stub.GetAllWorkerInfo(
+            request, timeout=timeout
+        )
+        message = next((msg for msg in reply.worker_table_data), None)
+        return (
+            protobuf_message_to_dict(
+                message=message, fields_to_decode=["worker_id", "raylet_id"]
+            )
+            if message is not None
+            else None
+        )
 
     # TODO(rickyx):
     # This is currently mirroring dashboard/modules/job/job_head.py::list_jobs

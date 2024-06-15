@@ -412,6 +412,10 @@ void GcsTaskManager::HandleGetTaskEvents(rpc::GetTaskEventsRequest request,
         task_event.task_info().type() == rpc::TaskType::DRIVER_TASK) {
       return false;
     }
+    
+    if (filters.has_type() && task_event.task_info().type() != filters.type()) {
+      return false;
+    }
 
     if (filters.has_actor_id() && task_event.task_info().has_actor_id() &&
         ActorID::FromBinary(task_event.task_info().actor_id()) !=

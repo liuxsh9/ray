@@ -44,6 +44,7 @@ from ray.dashboard.modules.version import (
     CURRENT_VERSION,
     VersionResponse,
 )
+from ray.util.state.util import convert_string_to_type
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -93,11 +94,13 @@ class JobAgentSubmissionClient:
             else:
                 await self._raise_error(resp)
 
-    async def delete_job_internal(self, job_id: str) -> JobDeleteResponse:
+    async def delete_job_internal(
+        self, job_id: str, del_logs: bool
+    ) -> JobDeleteResponse:
         logger.debug(f"Deleting job with job_id={job_id}.")
 
         async with self._session.delete(
-            f"{self._agent_address}/api/job_agent/jobs/{job_id}"
+            f"{self._agent_address}/api/job_agent/jobs/{job_id}?del_logs={del_logs}"
         ) as resp:
             if resp.status == 200:
                 result_json = await resp.json()
@@ -355,6 +358,7 @@ class JobHead(dashboard_utils.DashboardHeadModule):
 
     @routes.delete("/api/jobs/{job_or_submission_id}")
     async def delete_job(self, req: Request) -> Response:
+        del_logs = convert_string_to_type(req.query.get("del_logs", False), bool)
         job_or_submission_id = req.match_info["job_or_submission_id"]
         job = await find_job_by_ids(
             self._dashboard_head.gcs_aio_client,
@@ -366,18 +370,15 @@ class JobHead(dashboard_utils.DashboardHeadModule):
                 text=f"Job {job_or_submission_id} does not exist",
                 status=aiohttp.web.HTTPNotFound.status_code,
             )
-        if job.type is not JobType.SUBMISSION:
-            return Response(
-                text="Can only delete submission type jobs",
-                status=aiohttp.web.HTTPBadRequest.status_code,
-            )
 
         try:
             job_agent_client = await asyncio.wait_for(
                 self.choose_agent(),
                 timeout=dashboard_consts.WAIT_AVAILABLE_AGENT_TIMEOUT,
             )
-            resp = await job_agent_client.delete_job_internal(job.submission_id)
+            resp = await job_agent_client.delete_job_internal(
+                job_or_submission_id, del_logs
+            )
         except Exception:
             return Response(
                 text=traceback.format_exc(),
@@ -533,7 +534,7 @@ class JobHead(dashboard_utils.DashboardHeadModule):
     async def run(self, server):
         if not self._job_info_client:
             self._job_info_client = JobInfoStorageClient(
-                self._dashboard_head.gcs_aio_client
+                self._dashboard_head.gcs_aio_client,
             )
 
     @staticmethod

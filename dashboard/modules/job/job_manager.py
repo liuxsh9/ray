@@ -11,9 +11,12 @@ from ray.util.scheduling_strategies import (
     NodeAffinitySchedulingStrategy,
     SchedulingStrategyT,
 )
+from ray.util.state.common import protobuf_message_to_dict
+from ray.util.state.state_manager import StateDataSourceClient
 import ray
-from ray._private.gcs_utils import GcsAioClient
-from ray._private.utils import run_background_task
+from ray._raylet import JobID
+from ray._private.gcs_utils import GcsAioClient, GcsChannel
+from ray._private.utils import run_background_task, hex_to_binary
 import ray._private.ray_constants as ray_constants
 from ray.actor import ActorHandle
 from ray.dashboard.consts import (
@@ -34,6 +37,8 @@ from ray.exceptions import ActorUnschedulableError, RuntimeEnvSetupError
 from ray.job_submission import JobStatus
 from ray._private.event.event_logger import get_event_logger
 from ray.core.generated.event_pb2 import Event
+from ray.core.generated import gcs_service_pb2_grpc
+from ray.core.generated import gcs_service_pb2
 from ray.runtime_env import RuntimeEnvConfig
 
 logger = logging.getLogger(__name__)
@@ -68,8 +73,16 @@ class JobManager:
 
     def __init__(self, gcs_aio_client: GcsAioClient, logs_dir: str):
         self._gcs_aio_client = gcs_aio_client
-        self._job_info_client = JobInfoStorageClient(gcs_aio_client)
         self._gcs_address = gcs_aio_client.address
+        self._gcs_channel = GcsChannel(gcs_address=self._gcs_address, aio=True)
+        self._gcs_channel.connect()
+        self._gcs_job_info_stub = gcs_service_pb2_grpc.JobInfoGcsServiceStub(
+            self._gcs_channel.channel()
+        )
+        self._job_info_client = JobInfoStorageClient(gcs_aio_client)
+        self._state_client = StateDataSourceClient(
+            self._gcs_channel.channel(), self._gcs_aio_client
+        )
         self._log_client = JobLogStorageClient()
         self._supervisor_actor_cls = ray.remote(JobSupervisor)
         self.monitored_jobs = set()
@@ -583,18 +596,74 @@ class JobManager:
         else:
             return False
 
-    async def delete_job(self, job_id):
+    async def delete_job(self, submission_id, del_logs: bool = False):
         """Delete a job's info and metadata from the cluster."""
-        job_status = await self._job_info_client.get_status(job_id)
+        job_status = await self._job_info_client.get_status(submission_id)
 
         if job_status is None or not job_status.is_terminal():
             raise RuntimeError(
-                f"Attempted to delete job '{job_id}', "
+                f"Attempted to delete job '{submission_id}', "
                 f"but it is in a non-terminal state {job_status}."
             )
 
-        await self._job_info_client.delete_info(job_id)
+        await self._job_info_client.delete_info(submission_id)
+        if del_logs:
+            await self._add_log_to_delete(f"job-driver-{submission_id}.log")
         return True
+
+    async def delete_core_job(
+        self, job_id: str, driver_pid: int = None, del_logs: bool = False
+    ):
+        request = gcs_service_pb2.DeleteJobRequest()
+        request.job_id = JobID(hex_to_binary(job_id)).binary()
+        await self._gcs_job_info_stub.DeleteJob(request)
+        if del_logs:
+            worker_id = f"{job_id}ffffffffffffffffffffffffffffffffffffffffffffffff"
+            await self._add_log_to_delete(
+                f"python-core-driver-{worker_id}_{driver_pid}.log"
+            )
+
+            actor_reply = await self._state_client.get_all_actor_info(
+                filters=[("job_id", "=", job_id)]
+            )
+            for message in actor_reply.actor_table_data:
+                actor = protobuf_message_to_dict(
+                    message=message, fields_to_decode=["worker_id"]
+                )
+                if actor["address"]["worker_id"] == "":
+                    continue
+                await self._delete_worker_logs(
+                    job_id=job_id, worker_id=actor["address"]["worker_id"]
+                )
+
+            task_reply = await self._state_client.get_all_task_info(
+                filters=[("job_id", "=", job_id), ("type", "=", "NORMAL_TASK")]
+            )
+            for message in task_reply.events_by_task:
+                task = protobuf_message_to_dict(
+                    message=message, fields_to_decode=["worker_id"]
+                )
+                if task["state_updates"]["worker_id"] == "":
+                    continue
+                await self._delete_worker_logs(
+                    job_id="ffffffff", worker_id=task["state_updates"]["worker_id"]
+                )
+        return True
+
+    async def _delete_worker_logs(self, job_id, worker_id):
+        worker = await self._state_client.get_worker_info(worker_id=worker_id)
+        if worker is None and worker["is_alive"]:
+            return
+        proc_id = worker["pid"]
+        await self._add_log_to_delete(f"worker-{worker_id}-{job_id}-{proc_id}.err")
+        await self._add_log_to_delete(f"worker-{worker_id}-{job_id}-{proc_id}.out")
+        await self._add_log_to_delete(f"python-core-worker-{worker_id}_{proc_id}.log")
+
+    async def _add_log_to_delete(self, log_file: str):
+        timestamp = str(int(time.time())).encode()
+        await self._gcs_aio_client.internal_kv_put(
+            log_file.encode(), timestamp, True, b"LOGS_TO_DELETE"
+        )
 
     def job_info_client(self) -> JobInfoStorageClient:
         return self._job_info_client

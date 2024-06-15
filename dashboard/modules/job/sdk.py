@@ -291,6 +291,7 @@ class JobSubmissionClient(SubmissionClient):
     def delete_job(
         self,
         job_id: str,
+        del_logs: bool,
     ) -> bool:
         """Delete a job in a terminal state and all of its associated data.
 
@@ -317,7 +318,7 @@ class JobSubmissionClient(SubmissionClient):
                 job server fails, or if the job is not in a terminal state.
         """
         logger.debug(f"Deleting job with job_id={job_id}.")
-        r = self._do_request("DELETE", f"/api/jobs/{job_id}")
+        r = self._do_request("DELETE", f"/api/jobs/{job_id}?del_logs={del_logs}")
 
         if r.status_code == 200:
             return JobDeleteResponse(**r.json()).deleted

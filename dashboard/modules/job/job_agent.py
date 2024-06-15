@@ -1,3 +1,7 @@
+import asyncio
+import os
+import sys
+import time
 import aiohttp
 from aiohttp.web import Request, Response
 import dataclasses
@@ -16,8 +20,13 @@ from ray.dashboard.modules.job.common import (
 )
 from ray.dashboard.modules.job.job_manager import JobManager
 from ray.dashboard.modules.job.pydantic_models import JobType
-from ray.dashboard.modules.job.utils import parse_and_validate_request, find_job_by_ids
-
+from ray.dashboard.modules.job.utils import (
+    parse_and_validate_request,
+    find_job_by_ids,
+)
+from ray.util.state.util import convert_string_to_type
+import ray._private.ray_constants as ray_constants
+from ray.dashboard.modules.job.common import JOB_ID_METADATA_KEY
 
 routes = optional_utils.DashboardAgentRouteTable
 logger = logging.getLogger(__name__)
@@ -27,6 +36,8 @@ class JobAgent(dashboard_utils.DashboardAgentModule):
     def __init__(self, dashboard_agent):
         super().__init__(dashboard_agent)
         self._job_manager = None
+        self._gcs_aio_client = dashboard_agent.gcs_aio_client
+        self._log_dir = dashboard_agent.log_dir
 
     @routes.post("/api/job_agent/jobs/")
     @optional_utils.init_ray_and_catch_exceptions()
@@ -106,6 +117,7 @@ class JobAgent(dashboard_utils.DashboardAgentModule):
     @routes.delete("/api/job_agent/jobs/{job_or_submission_id}")
     @optional_utils.init_ray_and_catch_exceptions()
     async def delete_job(self, req: Request) -> Response:
+        del_logs = convert_string_to_type(req.query.get("del_logs", False), bool)
         job_or_submission_id = req.match_info["job_or_submission_id"]
         job = await find_job_by_ids(
             self._dashboard_agent.gcs_aio_client,
@@ -117,14 +129,31 @@ class JobAgent(dashboard_utils.DashboardAgentModule):
                 text=f"Job {job_or_submission_id} does not exist",
                 status=aiohttp.web.HTTPNotFound.status_code,
             )
-        if job.type is not JobType.SUBMISSION:
-            return Response(
-                text="Can only delete submission type jobs",
-                status=aiohttp.web.HTTPBadRequest.status_code,
-            )
-
         try:
-            deleted = await self.get_job_manager().delete_job(job.submission_id)
+            job_mgr = self.get_job_manager()
+            if job.type is JobType.DRIVER:
+                deleted = await job_mgr.delete_core_job(
+                    job.job_id, job.driver_info.pid, del_logs
+                )
+            else:
+                deleted = await job_mgr.delete_job(job.submission_id, del_logs)
+                if deleted:
+                    job_infos = await self._gcs_aio_client.get_all_job_info(
+                        timeout=None
+                    )
+                    for job_id, job_item in job_infos.items():
+                        if job_item.config.ray_namespace.startswith(
+                            ray_constants.RAY_INTERNAL_NAMESPACE_PREFIX
+                        ):
+                            # Skip jobs in any _ray_internal_namespace
+                            continue
+                        metadata = job_item.config.metadata
+                        job_submission_id = metadata.get(JOB_ID_METADATA_KEY)
+                        if job_submission_id and job.submission_id == job_submission_id:
+                            await job_mgr.delete_core_job(
+                                job_item.job_id.hex(), job_item.driver_pid, del_logs
+                            )
+
             resp = JobDeleteResponse(deleted=deleted)
         except Exception:
             return Response(
@@ -200,8 +229,39 @@ class JobAgent(dashboard_utils.DashboardAgentModule):
             )
         return self._job_manager
 
+    async def delete_job_logs(self):
+        logs_to_del_ns = "LOGS_TO_DELETE"
+        while True:
+            try:
+                logs_file_list = await self._gcs_aio_client.internal_kv_keys(
+                    "", namespace=logs_to_del_ns
+                )
+                for log_file_item in logs_file_list:
+                    log_file_name = log_file_item.decode()
+                    log_file_path = os.path.join(self._log_dir, log_file_name)
+
+                    if os.path.exists(log_file_path):
+                        # delete log file
+                        os.remove(log_file_path)
+                        logger.info(f"Remove LogFile {log_file_name}")
+                    else:
+                        # delete record in gcs kv.
+                        record_time_data = await self._gcs_aio_client.internal_kv_get(
+                            log_file_item, namespace=logs_to_del_ns
+                        )
+                        record_time = int(record_time_data.decode())
+                        if time.time() - record_time > 60:
+                            await self._gcs_aio_client.internal_kv_del(
+                                log_file_item,
+                                del_by_prefix=False,
+                                namespace=logs_to_del_ns,
+                            )
+            except Exception:
+                logger.info("Error", exc_info=sys.exc_info())
+            await asyncio.sleep(1.0)
+
     async def run(self, server):
-        pass
+        await self.delete_job_logs()
 
     @staticmethod
     def is_minimal_module():

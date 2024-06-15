@@ -413,6 +413,14 @@ def stop(
         "using the RAY_ADDRESS environment variable."
     ),
 )
+@click.option(
+    "--del-logs",
+    is_flag=True,
+    type=bool,
+    default=False,
+    required=False,
+    help="If set, delete related log files.",
+)
 @click.argument("job-id", type=str)
 @add_common_job_options
 @add_click_logging_options
@@ -422,6 +430,7 @@ def delete(
     job_id: str,
     headers: Optional[str],
     verify: Union[bool, str],
+    del_logs: Optional[bool],
 ):
     """Deletes a stopped job and its associated data from memory.
 
@@ -435,7 +444,7 @@ def delete(
         ray job delete <my_job_id>
     """
     client = _get_sdk_client(address, headers=headers, verify=verify)
-    client.delete_job(job_id)
+    client.delete_job(job_id, del_logs)
     cli_logger.print(f"Job '{job_id}' deleted successfully")
 
 

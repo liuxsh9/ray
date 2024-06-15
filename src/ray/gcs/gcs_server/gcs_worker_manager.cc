@@ -152,8 +152,22 @@ void GcsWorkerManager::HandleGetAllWorkerInfo(
     rpc::SendReplyCallback send_reply_callback) {
   auto limit = request.has_limit() ? request.limit() : -1;
 
+  const auto filter_fn = [](const rpc::GetAllWorkerInfoRequest::Filters &filters, const rpc::WorkerTableData &data) {
+    rpc::Address address = data.worker_address();
+    if (filters.has_worker_id() && WorkerID::FromBinary(filters.worker_id()) != WorkerID::FromBinary(address.worker_id())) {
+      return false;
+    }
+    if (filters.has_node_id() && NodeID::FromBinary(filters.node_id()) != NodeID::FromBinary(address.raylet_id())) {
+      return false;
+    }
+    if (filters.has_is_alive() && filters.is_alive() != data.is_alive()) {
+      return false;
+    }
+    return true;
+  };
+
   RAY_LOG(DEBUG) << "Getting all worker info.";
-  auto on_done = [reply, send_reply_callback, limit](
+  auto on_done = [reply, send_reply_callback, limit, request, filter_fn](
                      const absl::flat_hash_map<WorkerID, WorkerTableData> &result) {
     auto total_workers = result.size();
     reply->set_total(total_workers);
@@ -162,6 +176,9 @@ void GcsWorkerManager::HandleGetAllWorkerInfo(
     for (auto &data : result) {
       if (limit != -1 && count >= limit) {
         break;
+      }
+      if (request.has_filters() && !filter_fn(request.filters(), data.second)) {
+        continue;
       }
       count += 1;
 

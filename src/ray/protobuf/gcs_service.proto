@@ -28,6 +28,14 @@ message AddJobReply {
   GcsStatus status = 1;
 }
 
+message DeleteJobRequest {
+  bytes job_id = 1;
+}
+
+message DeleteJobReply {
+  GcsStatus status = 1;
+}
+
 message MarkJobFinishedRequest {
   bytes job_id = 1;
 }
@@ -63,6 +71,8 @@ message GetNextJobIDReply {
 service JobInfoGcsService {
   // Add job to GCS Service.
   rpc AddJob(AddJobRequest) returns (AddJobReply);
+  // Delete job to GCS Service.
+  rpc DeleteJob(DeleteJobRequest) returns (DeleteJobReply);
   // Mark job as finished to GCS Service.
   rpc MarkJobFinished(MarkJobFinishedRequest) returns (MarkJobFinishedReply);
   // Get information of all jobs from GCS Service.
@@ -268,6 +278,17 @@ message GetAllWorkerInfoRequest {
   // Maximum number of entries to return.
   // If not specified, return the whole entries without truncation.
   optional int64 limit = 1;
+  // The filter to apply to the returned entries.
+  message Filters {
+    // worker id
+    optional bytes worker_id = 1;
+    // node id
+    optional bytes node_id = 2;
+    // is alive
+    optional bool is_alive = 3;
+  }
+  optional Filters filters = 2;
+
 }
 
 message GetAllWorkerInfoReply {
@@ -719,6 +740,8 @@ message GetTaskEventsRequest {
     optional string name = 4;
     // True if task events from driver (only profiling events) should be excluded.
     optional bool exclude_driver = 5;
+    // Get the task events of task with type.
+    optional TaskType type = 6;
   }
 
   // Maximum number of TaskEvents to return.
