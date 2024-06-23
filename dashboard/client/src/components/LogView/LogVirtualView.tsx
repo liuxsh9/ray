@@ -1,6 +1,7 @@
 import { Box, Theme, Typography, useTheme } from "@mui/material";
 import dayjs from "dayjs";
-import low from "lowlight";
+import prolog from "highlight.js/lib/languages/prolog";
+import { lowlight } from "lowlight";
 import React, {
   MutableRefObject,
   useCallback,
@@ -14,6 +15,8 @@ import "./darcula.css";
 import "./github.css";
 import "./index.css";
 import { MAX_LINES_FOR_LOGS } from "../../service/log";
+
+lowlight.registerLanguage("prolog", prolog);
 
 const uniqueKeySelector = () => Math.random().toString(16).slice(-8);
 
@@ -228,9 +231,9 @@ const LogVirtualView: React.FC<LogVirtualViewProps> = ({
           handleLogLineClick(formattedLogLine);
         }}
       >
-        {low
+        {lowlight
           .highlight(language, message)
-          .value.map((v) => value2react(v, index.toString(), keywords))}
+          .children.map((v) => value2react(v, index.toString(), keywords))}
         <br />
       </Box>
     );
