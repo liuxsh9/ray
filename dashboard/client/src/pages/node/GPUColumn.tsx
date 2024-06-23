@@ -1,11 +1,10 @@
-import { Box, Tooltip, Typography } from "@mui/material";
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Theme, Tooltip, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { RightPaddedTypography } from "../../common/CustomTypography";
 import UsageBar from "../../common/UsageBar";
 import { GPUStats, NodeDetail } from "../../type/node";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = (theme: Theme) => ({
   gpuColumn: {
     minWidth: 120,
   },
@@ -13,7 +12,7 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     minWidth: 120,
   },
-}));
+});
 
 export type NodeGPUEntryProps = {
   slot: number;
@@ -21,10 +20,10 @@ export type NodeGPUEntryProps = {
 };
 
 export const NodeGPUEntry: React.FC<NodeGPUEntryProps> = ({ gpu, slot }) => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   return (
     <Tooltip title={gpu.name}>
-      <Box className={classes.box}>
+      <Box sx={styles.box}>
         <RightPaddedTypography variant="body1">[{slot}]:</RightPaddedTypography>
         {gpu.utilizationGpu !== undefined ? (
           <UsageBar
@@ -42,9 +41,9 @@ export const NodeGPUEntry: React.FC<NodeGPUEntryProps> = ({ gpu, slot }) => {
 };
 
 export const NodeGPUView = ({ node }: { node: NodeDetail }) => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   return (
-    <div className={classes.gpuColumn}>
+    <Box sx={styles.gpuColumn}>
       {node.gpus !== undefined && node.gpus.length !== 0 ? (
         node.gpus.map((gpu, i) => (
           <NodeGPUEntry key={gpu.uuid} gpu={gpu} slot={gpu.index} />
@@ -54,7 +53,7 @@ export const NodeGPUView = ({ node }: { node: NodeDetail }) => {
           N/A
         </Typography>
       )}
-    </div>
+    </Box>
   );
 };
 
@@ -65,7 +64,7 @@ export const WorkerGpuRow = ({
   workerPID: number | null;
   gpus?: GPUStats[];
 }) => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   const workerGPUEntries = (gpus ?? [])
     .map((gpu, i) => {
       const process = gpu.processes?.find(
@@ -83,7 +82,7 @@ export const WorkerGpuRow = ({
       N/A
     </Typography>
   ) : (
-    <div className={classes.gpuColumn}>{workerGPUEntries}</div>
+    <Box sx={styles.gpuColumn}>{workerGPUEntries}</Box>
   );
 };
 

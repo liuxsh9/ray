@@ -1,5 +1,13 @@
-import { Grid, Switch, Tab, TableContainer, Tabs } from "@mui/material";
-import makeStyles from "@mui/styles/makeStyles";
+import {
+  Box,
+  Grid,
+  Switch,
+  Tab,
+  TableContainer,
+  Tabs,
+  Theme,
+  useTheme,
+} from "@mui/material";
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatDateFromTimeMs } from "../../common/formatUtils";
@@ -13,7 +21,7 @@ import { memoryConverter } from "../../util/converter";
 import { MainNavPageInfo } from "../layout/mainNavContext";
 import { useNodeDetail } from "./hook/useNodeDetail";
 
-const useStyle = makeStyles((theme) => ({
+const useStyle = (theme: Theme) => ({
   root: {
     padding: theme.spacing(2),
   },
@@ -28,10 +36,10 @@ const useStyle = makeStyles((theme) => ({
   tab: {
     marginBottom: theme.spacing(2),
   },
-}));
+});
 
 const NodeDetailPage = () => {
-  const classes = useStyle();
+  const styles = useStyle(useTheme());
   const {
     params,
     selectedTab,
@@ -45,7 +53,7 @@ const NodeDetailPage = () => {
   } = useNodeDetail();
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       <MainNavPageInfo
         pageInfo={{
           title: `Node: ${params.id}`,
@@ -72,11 +80,7 @@ const NodeDetailPage = () => {
         Request Status: {msg}
       </TitleCard>
       <TitleCard title="Node Detail">
-        <Tabs
-          value={selectedTab}
-          onChange={handleChange}
-          className={classes.tab}
-        >
+        <Tabs value={selectedTab} onChange={handleChange} sx={styles.tab}>
           <Tab value="info" label="Info" />
           <Tab value="raylet" label="Raylet" />
           <Tab
@@ -91,27 +95,26 @@ const NodeDetailPage = () => {
           />
         </Tabs>
         {nodeDetail && selectedTab === "info" && (
-          <div className={classes.paper}>
+          <Box sx={styles.paper}>
             <Grid container>
               <Grid item xs>
-                <div className={classes.label}>Hostname</div>{" "}
-                {nodeDetail.hostname}
+                <Box sx={styles.label}>Hostname</Box> {nodeDetail.hostname}
               </Grid>
               <Grid item xs>
-                <div className={classes.label}>IP</div> {nodeDetail.ip}
+                <Box sx={styles.label}>IP</Box> {nodeDetail.ip}
               </Grid>
             </Grid>
             <Grid container>
               <Grid item xs>
                 {nodeDetail.cpus && (
                   <React.Fragment>
-                    <div className={classes.label}>CPU (Logic/Physic)</div>{" "}
+                    <Box sx={styles.label}>CPU (Logic/Physic)</Box>{" "}
                     {nodeDetail.cpus[0]}/ {nodeDetail.cpus[1]}
                   </React.Fragment>
                 )}
               </Grid>
               <Grid item xs>
-                <div className={classes.label}>Load (1/5/15min)</div>{" "}
+                <Box sx={styles.label}>Load (1/5/15min)</Box>{" "}
                 {nodeDetail?.loadAvg[0] &&
                   nodeDetail.loadAvg[0]
                     .map((e) => Number(e).toFixed(2))
@@ -120,30 +123,30 @@ const NodeDetailPage = () => {
             </Grid>
             <Grid container>
               <Grid item xs>
-                <div className={classes.label}>Load per CPU (1/5/15min)</div>{" "}
+                <Box sx={styles.label}>Load per CPU (1/5/15min)</Box>{" "}
                 {nodeDetail?.loadAvg[1] &&
                   nodeDetail.loadAvg[1]
                     .map((e) => Number(e).toFixed(2))
                     .join("/")}
               </Grid>
               <Grid item xs>
-                <div className={classes.label}>Boot Time</div>{" "}
+                <Box sx={styles.label}>Boot Time</Box>{" "}
                 {formatDateFromTimeMs(nodeDetail.bootTime * 1000)}
               </Grid>
             </Grid>
             <Grid container>
               <Grid item xs>
-                <div className={classes.label}>Sent Tps</div>{" "}
+                <Box sx={styles.label}>Sent Tps</Box>{" "}
                 {memoryConverter(nodeDetail?.networkSpeed[0])}/s
               </Grid>
               <Grid item xs>
-                <div className={classes.label}>Recieved Tps</div>{" "}
+                <Box sx={styles.label}>Recieved Tps</Box>{" "}
                 {memoryConverter(nodeDetail?.networkSpeed[1])}/s
               </Grid>
             </Grid>
             <Grid container>
               <Grid item xs>
-                <div className={classes.label}>Memory</div>{" "}
+                <Box sx={styles.label}>Memory</Box>{" "}
                 {nodeDetail?.mem && (
                   <PercentageBar
                     num={Number(nodeDetail?.mem[0] - nodeDetail?.mem[1])}
@@ -155,7 +158,7 @@ const NodeDetailPage = () => {
                 )}
               </Grid>
               <Grid item xs>
-                <div className={classes.label}>CPU</div>{" "}
+                <Box sx={styles.label}>CPU</Box>{" "}
                 <PercentageBar num={Number(nodeDetail.cpu)} total={100}>
                   {nodeDetail.cpu}%
                 </PercentageBar>
@@ -165,7 +168,7 @@ const NodeDetailPage = () => {
               {nodeDetail?.disk &&
                 Object.entries(nodeDetail?.disk).map(([path, obj]) => (
                   <Grid item xs={6} key={path}>
-                    <div className={classes.label}>Disk ({path})</div>{" "}
+                    <Box sx={styles.label}>Disk ({path})</Box>{" "}
                     {obj && (
                       <PercentageBar num={Number(obj.used)} total={obj.total}>
                         {memoryConverter(obj.used)}/{memoryConverter(obj.total)}
@@ -177,7 +180,7 @@ const NodeDetailPage = () => {
             </Grid>
             <Grid container>
               <Grid item xs>
-                <div className={classes.label}>Logs</div>{" "}
+                <Box sx={styles.label}>Logs</Box>{" "}
                 <Link
                   to={`/logs/?nodeId=${encodeURIComponent(
                     nodeDetail.raylet.nodeId,
@@ -187,14 +190,14 @@ const NodeDetailPage = () => {
                 </Link>
               </Grid>
             </Grid>
-          </div>
+          </Box>
         )}
         {raylet && Object.keys(raylet).length > 0 && selectedTab === "raylet" && (
           <React.Fragment>
-            <div className={classes.paper}>
+            <Box sx={styles.paper}>
               <Grid container>
                 <Grid item xs>
-                  <div className={classes.label}>Command</div>
+                  <Box sx={styles.label}>Command</Box>
                   <br />
                   <div style={{ height: 200, overflow: "auto" }}>
                     {nodeDetail?.cmdline.join(" ")}
@@ -203,23 +206,22 @@ const NodeDetailPage = () => {
               </Grid>
               <Grid container>
                 <Grid item xs>
-                  <div className={classes.label}>Pid</div> {raylet?.pid}
+                  <Box sx={styles.label}>Pid</Box> {raylet?.pid}
                 </Grid>
                 <Grid item xs>
-                  <div className={classes.label}>Workers Num</div>{" "}
-                  {raylet?.numWorkers}
+                  <Box sx={styles.label}>Workers Num</Box> {raylet?.numWorkers}
                 </Grid>
                 <Grid item xs>
-                  <div className={classes.label}>Node Manager Port</div>{" "}
+                  <Box sx={styles.label}>Node Manager Port</Box>{" "}
                   {raylet?.nodeManagerPort}
                 </Grid>
               </Grid>
-            </div>
+            </Box>
           </React.Fragment>
         )}
         {nodeDetail?.workers && selectedTab === "worker" && (
           <React.Fragment>
-            <TableContainer className={classes.paper}>
+            <TableContainer sx={styles.paper}>
               <RayletWorkerTable
                 workers={nodeDetail?.workers}
                 actorMap={nodeDetail?.actors}
@@ -229,7 +231,7 @@ const NodeDetailPage = () => {
         )}
         {nodeDetail?.actors && selectedTab === "actor" && (
           <React.Fragment>
-            <TableContainer className={classes.paper}>
+            <TableContainer sx={styles.paper}>
               <ActorTable
                 actors={nodeDetail.actors}
                 workers={nodeDetail?.workers}
@@ -239,7 +241,7 @@ const NodeDetailPage = () => {
           </React.Fragment>
         )}
       </TitleCard>
-    </div>
+    </Box>
   );
 };
 

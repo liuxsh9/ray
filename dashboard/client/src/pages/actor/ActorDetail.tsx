@@ -1,4 +1,4 @@
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Theme, useTheme } from "@mui/material";
 import React from "react";
 import { Outlet } from "react-router-dom";
 import { CollapsibleSection } from "../../common/CollapsibleSection";
@@ -20,7 +20,7 @@ import TaskList from "../state/task";
 import { ActorLogs } from "./ActorLogs";
 import { useActorDetail } from "./hook/useActorDetail";
 
-const useStyle = makeStyles((theme) => ({
+const useStyle = (theme: Theme) => ({
   root: {
     padding: theme.spacing(2),
     backgroundColor: "white",
@@ -39,7 +39,7 @@ const useStyle = makeStyles((theme) => ({
   tasksSection: {
     marginTop: theme.spacing(4),
   },
-}));
+});
 
 export const ActorDetailLayout = () => {
   const { params, actorDetail } = useActorDetail();
@@ -68,24 +68,24 @@ export const ActorDetailLayout = () => {
 };
 
 const ActorDetailPage = () => {
-  const classes = useStyle();
+  const styles = useStyle(useTheme());
   const { params, actorDetail, msg, isLoading } = useActorDetail();
 
   if (isLoading || actorDetail === undefined) {
     return (
-      <div className={classes.root}>
+      <Box sx={styles.root}>
         <Loading loading={isLoading} />
         <TitleCard title={`ACTOR - ${params.actorId}`}>
           <StatusChip type="actor" status="LOADING" />
           <br />
           Request Status: {msg} <br />
         </TitleCard>
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       <MetadataSection
         metadataList={[
           {
@@ -225,15 +225,12 @@ const ActorDetailPage = () => {
           <ActorLogs actor={actorDetail} />
         </Section>
       </CollapsibleSection>
-      <CollapsibleSection
-        title="Tasks History"
-        className={classes.tasksSection}
-      >
+      <CollapsibleSection title="Tasks History" sx={styles.tasksSection}>
         <Section>
           <TaskList jobId={actorDetail.jobId} actorId={params.actorId} />
         </Section>
       </CollapsibleSection>
-    </div>
+    </Box>
   );
 };
 

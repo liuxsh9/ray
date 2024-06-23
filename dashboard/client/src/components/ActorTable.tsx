@@ -13,6 +13,7 @@ import {
   TextFieldProps,
   Tooltip,
   Typography,
+  useTheme,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import { orange } from "@mui/material/colors";
@@ -157,7 +158,7 @@ const ActorTable = ({
     maxPage,
   } = sliceToPage(sortedActors, pageNo, pageSize ?? 10);
 
-  const classes = rowStyles();
+  const styles = rowStyles(useTheme());
 
   const columns = [
     { label: "" },
@@ -511,7 +512,7 @@ const ActorTable = ({
           <StateCounter type="actor" list={sortedActors} />
         </div>
       </div>
-      <div className={classes.tableContainer}>
+      <Box sx={styles.tableContainer}>
         <Table>
           <TableHead>
             <TableRow>
@@ -524,9 +525,7 @@ const ActorTable = ({
                   >
                     {label}
                     {helpInfo && (
-                      <HelpInfo className={classes.helpInfo}>
-                        {helpInfo}
-                      </HelpInfo>
+                      <HelpInfo sx={styles.helpInfo}>{helpInfo}</HelpInfo>
                     )}
                   </Box>
                 </TableCell>
@@ -576,8 +575,8 @@ const ActorTable = ({
                   key={actorId}
                 >
                   <TableCell align="center">
-                    <Tooltip className={classes.idCol} title={actorId} arrow>
-                      <div>
+                    <Tooltip title={actorId} arrow>
+                      <Box sx={styles.idCol}>
                         <ActorLink
                           actorId={actorId}
                           to={
@@ -586,7 +585,7 @@ const ActorTable = ({
                               : actorId
                           }
                         />
-                      </div>
+                      </Box>
                     </Tooltip>
                   </TableCell>
                   <TableCell align="center">{actorClass}</TableCell>
@@ -642,19 +641,15 @@ const ActorTable = ({
                   </TableCell>
                   <TableCell align="center">
                     {address?.rayletId ? (
-                      <Tooltip
-                        className={classes.idCol}
-                        title={address?.rayletId}
-                        arrow
-                      >
-                        <div>
+                      <Tooltip title={address?.rayletId} arrow>
+                        <Box sx={styles.idCol}>
                           <Link
                             component={RouterLink}
                             to={generateNodeLink(address.rayletId)}
                           >
                             {address?.rayletId}
                           </Link>
-                        </div>
+                        </Box>
                       </Tooltip>
                     ) : (
                       "-"
@@ -700,16 +695,16 @@ const ActorTable = ({
                   </TableCell>
                   <TableCell align="center">
                     <Tooltip
-                      className={classes.idCol}
                       title={placementGroupId ? placementGroupId : "-"}
                       arrow
                     >
-                      <div>{placementGroupId ? placementGroupId : "-"}</div>
+                      <Box sx={styles.idCol}>
+                        {placementGroupId ? placementGroupId : "-"}
+                      </Box>
                     </Tooltip>
                   </TableCell>
                   <TableCell align="center">
                     <Tooltip
-                      className={classes.OverflowCol}
                       title={Object.entries(requiredResources || {}).map(
                         ([key, val]) => (
                           <div style={{ margin: 4 }}>
@@ -719,20 +714,16 @@ const ActorTable = ({
                       )}
                       arrow
                     >
-                      <div>
+                      <Box sx={styles.OverflowCol}>
                         {Object.entries(requiredResources || {})
                           .map(([key, val]) => `${key}: ${val}`)
                           .join(", ")}
-                      </div>
+                      </Box>
                     </Tooltip>
                   </TableCell>
                   <TableCell align="center">
-                    <Tooltip
-                      className={classes.OverflowCol}
-                      title={exitDetail}
-                      arrow
-                    >
-                      <div>{exitDetail}</div>
+                    <Tooltip title={exitDetail} arrow>
+                      <Box sx={styles.OverflowCol}>{exitDetail}</Box>
                     </Tooltip>
                   </TableCell>
                 </ExpandableTableRow>
@@ -740,7 +731,7 @@ const ActorTable = ({
             )}
           </TableBody>
         </Table>
-      </div>
+      </Box>
     </React.Fragment>
   );
 };

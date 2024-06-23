@@ -1,6 +1,12 @@
-import { Box, IconButton, Tab, Tabs, Typography } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
+import {
+  Box,
+  IconButton,
+  Tab,
+  Tabs,
+  Theme,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { RiExternalLinkLine, RiSortAsc, RiSortDesc } from "react-icons/ri";
 import { Link } from "react-router-dom";
@@ -10,13 +16,11 @@ import { LogViewer } from "../pages/log/LogViewer";
 import { HideableBlock } from "./CollapsibleSection";
 import { ClassNameProps } from "./props";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    tabs: {
-      borderBottom: `1px solid ${theme.palette.divider}`,
-    },
-  }),
-);
+const useStyles = (theme: Theme) => ({
+  tabs: {
+    borderBottom: `1px solid ${theme.palette.divider}`,
+  },
+});
 
 export type MultiTabLogViewerTabDetails = {
   title: string;
@@ -42,7 +46,7 @@ export const MultiTabLogViewer = ({
   contextKey,
   className,
 }: MultiTabLogViewerProps) => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
 
   // DO NOT use `cachedTab` or `setCachedTab` when `contextKey` is undefined!
   const [cachedTab, setCachedTab] = useLocalStorage(
@@ -84,7 +88,7 @@ export const MultiTabLogViewer = ({
         >
           {(tabs.length > 1 || otherLogsLink) && (
             <Tabs
-              className={classes.tabs}
+              sx={styles.tabs}
               value={value}
               onChange={(_, newValue) => {
                 if (contextKey) {

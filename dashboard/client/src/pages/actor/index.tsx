@@ -1,25 +1,25 @@
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Theme, useTheme } from "@mui/material";
 import React from "react";
 import ActorList from "./ActorList";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = (theme: Theme) => ({
   root: {
     padding: theme.spacing(2),
     width: "100%",
     backgroundColor: "white",
   },
-}));
+});
 
 /**
  * Represent the standalone actors page.
  */
 const Actors = () => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       <ActorList />
-    </div>
+    </Box>
   );
 };
 

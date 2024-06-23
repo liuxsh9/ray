@@ -1,12 +1,19 @@
-import { Box, Button, Grid, MenuItem, Select } from "@mui/material";
-import makeStyles from "@mui/styles/makeStyles";
+import {
+  Box,
+  Button,
+  Grid,
+  MenuItem,
+  Select,
+  Theme,
+  useTheme,
+} from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import LogVirtualView from "../../components/LogView/LogVirtualView";
 import TitleCard from "../../components/TitleCard";
 import { getJmap, getJstack, getJstat } from "../../service/util";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = (theme: Theme) => ({
   root: {
     padding: theme.spacing(4),
     width: "100%",
@@ -22,10 +29,10 @@ const useStyles = makeStyles((theme) => ({
   search: {
     margin: theme.spacing(1),
   },
-}));
+});
 
 const CMDResult = () => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   const { cmd, ip, pid } = useParams() as {
     cmd: string;
     ip: string;
@@ -81,10 +88,10 @@ const CMDResult = () => {
   }, [cmd, executeJstat, ip, pid]);
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       <TitleCard title={cmd}>
         {cmd === "jstat" && (
-          <Box className={classes.pageMeta}>
+          <Box sx={styles.pageMeta}>
             <Grid container spacing={1}>
               <Grid item>
                 <Select
@@ -123,7 +130,7 @@ const CMDResult = () => {
           height={800}
         />
       </TitleCard>
-    </div>
+    </Box>
   );
 };
 

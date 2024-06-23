@@ -1,17 +1,19 @@
 import {
   Alert,
   AlertProps,
+  Box,
   Button,
   InputAdornment,
   Link,
   Menu,
   MenuItem,
   Paper,
+  SxProps,
   TextField,
+  Theme,
   Tooltip,
+  useTheme,
 } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
 import React, { useContext, useEffect, useState } from "react";
 import { BiRefresh, BiTime } from "react-icons/bi";
 import { RiExternalLinkLine } from "react-icons/ri";
@@ -23,30 +25,28 @@ import { HelpInfo } from "../../components/Tooltip";
 import { MainNavPageInfo } from "../layout/mainNavContext";
 import { MAIN_NAV_HEIGHT } from "../layout/MainNavLayout";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    metricsRoot: { margin: theme.spacing(1) },
-    topBar: {
-      position: "sticky",
-      top: MAIN_NAV_HEIGHT,
-      width: "100%",
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "flex-end",
-      padding: theme.spacing(1),
-      boxShadow: "0px 1px 0px #D2DCE6",
-      zIndex: 1,
-      height: 36,
-    },
-    timeRangeButton: {
-      marginLeft: theme.spacing(2),
-    },
-    alert: {
-      marginTop: 30,
-    },
-  }),
-);
+const useStyles = (theme: Theme) => ({
+  metricsRoot: { margin: theme.spacing(1) },
+  topBar: {
+    position: "sticky",
+    top: MAIN_NAV_HEIGHT,
+    width: "100%",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    padding: theme.spacing(1),
+    boxShadow: "0px 1px 0px #D2DCE6",
+    zIndex: 1,
+    height: 36,
+  },
+  timeRangeButton: {
+    marginLeft: theme.spacing(2),
+  },
+  alert: {
+    marginTop: "30px",
+  },
+});
 
 export enum RefreshOptions {
   OFF = "off",
@@ -380,7 +380,7 @@ const DATA_METRICS_CONFIG: MetricsSectionConfig[] = [
 ];
 
 export const Metrics = () => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   const { grafanaHost, prometheusHealth, dashboardUids, dashboardDatasource } =
     useContext(GlobalContext);
 
@@ -432,10 +432,10 @@ export const Metrics = () => {
         }}
       />
       {grafanaHost === undefined || !prometheusHealth ? (
-        <GrafanaNotRunningAlert className={classes.alert} />
+        <GrafanaNotRunningAlert sx={styles.alert} />
       ) : (
         <div>
-          <Paper className={classes.topBar}>
+          <Paper sx={styles.topBar}>
             <Button
               onClick={({ currentTarget }) => {
                 setViewInGrafanaMenuRef(currentTarget);
@@ -477,10 +477,10 @@ export const Metrics = () => {
               </Menu>
             )}
             <TextField
-              className={classes.timeRangeButton}
+              sx={styles.timeRangeButton}
               select
               size="small"
-              sx={{ width: 80 }}
+              style={{ width: 80 }}
               value={refreshOption}
               onChange={({ target: { value } }) => {
                 setRefreshOption(value as RefreshOptions);
@@ -502,10 +502,10 @@ export const Metrics = () => {
             </TextField>
             <HelpInfo>Auto-refresh interval</HelpInfo>
             <TextField
-              className={classes.timeRangeButton}
+              sx={styles.timeRangeButton}
               select
               size="small"
-              sx={{ width: 140 }}
+              style={{ width: 140 }}
               value={timeRangeOption}
               onChange={({ target: { value } }) => {
                 setTimeRangeOption(value as TimeRangeOptions);
@@ -532,7 +532,7 @@ export const Metrics = () => {
             time-series graph. You can use control/cmd + click to filter out a
             line in the time-series graph.
           </Alert>
-          <div className={classes.metricsRoot}>
+          <Box sx={styles.metricsRoot}>
             {METRICS_CONFIG.map((config) => (
               <MetricsSection
                 key={config.title}
@@ -554,40 +554,38 @@ export const Metrics = () => {
                   dashboardDatasource={grafanaDefaultDatasource}
                 />
               ))}
-          </div>
+          </Box>
         </div>
       )}
     </div>
   );
 };
 
-const useMetricsSectionStyles = makeStyles((theme) =>
-  createStyles({
-    metricsSection: {
-      marginTop: theme.spacing(3),
+const useMetricsSectionStyles = (theme: Theme) => ({
+  metricsSection: {
+    marginTop: theme.spacing(3),
+  },
+  grafanaEmbedsContainer: {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing(3),
+    marginTop: theme.spacing(2),
+  },
+  chart: {
+    width: "100%",
+    height: 400,
+    overflow: "hidden",
+    [theme.breakpoints.up("md")]: {
+      // Calculate max width based on 1/3 of the total width minus padding between cards
+      width: `calc((100% - ${theme.spacing(3)} * 2) / 3)`,
     },
-    grafanaEmbedsContainer: {
-      display: "flex",
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: theme.spacing(3),
-      marginTop: theme.spacing(2),
-    },
-    chart: {
-      width: "100%",
-      height: 400,
-      overflow: "hidden",
-      [theme.breakpoints.up("md")]: {
-        // Calculate max width based on 1/3 of the total width minus padding between cards
-        width: `calc((100% - ${theme.spacing(3)} * 2) / 3)`,
-      },
-    },
-    grafanaEmbed: {
-      width: "100%",
-      height: "100%",
-    },
-  }),
-);
+  },
+  grafanaEmbed: {
+    width: "100%",
+    height: "100%",
+  },
+});
 
 type MetricsSectionProps = {
   metricConfig: MetricsSectionConfig;
@@ -606,17 +604,17 @@ const MetricsSection = ({
 }: MetricsSectionProps) => {
   const { grafanaHost, sessionName } = useContext(GlobalContext);
 
-  const classes = useMetricsSectionStyles();
+  const styles = useMetricsSectionStyles(useTheme());
 
   return (
     <CollapsibleSection
       key={title}
       title={title}
       startExpanded
-      className={classes.metricsSection}
+      sx={styles.metricsSection}
       keepRendered
     >
-      <div className={classes.grafanaEmbedsContainer}>
+      <Box sx={styles.grafanaEmbedsContainer}>
         {contents.map(({ title, pathParams }) => {
           const path =
             `/d-solo/${dashboardUid}?${pathParams}` +
@@ -624,49 +622,50 @@ const MetricsSection = ({
           return (
             <Paper
               key={pathParams}
-              className={classes.chart}
+              sx={styles.chart}
               variant="outlined"
               elevation={0}
             >
-              <iframe
+              <Box
+                component="iframe"
                 key={title}
                 title={title}
-                className={classes.grafanaEmbed}
+                sx={styles.grafanaEmbed}
                 src={`${grafanaHost}${path}`}
                 frameBorder="0"
               />
             </Paper>
           );
         })}
-      </div>
+      </Box>
     </CollapsibleSection>
   );
 };
 
-const useGrafanaNotRunningAlertStyles = makeStyles((theme) =>
-  createStyles({
-    heading: {
-      fontWeight: 500,
-    },
-  }),
-);
+const useGrafanaNotRunningAlertStyles = (theme: Theme) => ({
+  heading: {
+    fontWeight: 500,
+  },
+});
 
 export type GrafanaNotRunningAlertProps = {
   severity?: AlertProps["severity"];
+  sx?: SxProps<Theme>;
 } & ClassNameProps;
 
 export const GrafanaNotRunningAlert = ({
   className,
   severity = "warning",
+  sx,
 }: GrafanaNotRunningAlertProps) => {
-  const classes = useGrafanaNotRunningAlertStyles();
+  const styles = useGrafanaNotRunningAlertStyles(useTheme());
 
   const { grafanaHost, prometheusHealth } = useContext(GlobalContext);
   return grafanaHost === undefined || !prometheusHealth ? (
-    <Alert className={className} severity={severity}>
-      <span className={classes.heading}>
+    <Alert className={className} sx={sx} severity={severity}>
+      <Box component="span" sx={styles.heading}>
         Set up Prometheus and Grafana for better Ray Dashboard experience
-      </span>
+      </Box>
       <br />
       <br />
       Time-series charts are hidden because either Prometheus or Grafana server

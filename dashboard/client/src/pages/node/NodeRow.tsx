@@ -4,10 +4,10 @@ import {
   Link,
   TableCell,
   TableRow,
+  Theme,
   Tooltip,
+  useTheme,
 } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
 import { sortBy } from "lodash";
 import React, { useState } from "react";
 import { RiArrowDownSLine, RiArrowRightSLine } from "react-icons/ri";
@@ -44,44 +44,42 @@ type NodeRowProps = Pick<NodeRowsProps, "node"> & {
   onExpandButtonClick: () => void;
 };
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    tableContainer: {
-      overflowX: "scroll",
-    },
-    expandCollapseIcon: {
-      color: theme.palette.text.secondary,
-      fontSize: "1.5em",
-      verticalAlign: "middle",
-    },
-    idCol: {
-      display: "block",
-      width: "50px",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      whiteSpace: "nowrap",
-    },
-    OverflowCol: {
-      display: "block",
-      width: "100px",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      whiteSpace: "nowrap",
-    },
-    helpInfo: {
-      marginLeft: theme.spacing(1),
-    },
-    logicalResources: {
-      maxWidth: 200,
-    },
-    labels: {
-      maxWidth: 200,
-    },
-    stateMessage: {
-      maxWidth: 200,
-    },
-  }),
-);
+const useStyles = (theme: Theme) => ({
+  tableContainer: {
+    overflowX: "scroll",
+  },
+  expandCollapseIcon: {
+    color: theme.palette.text.secondary,
+    fontSize: "1.5em",
+    verticalAlign: "middle",
+  },
+  idCol: {
+    display: "block",
+    width: "50px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  OverflowCol: {
+    display: "block",
+    width: "100px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  helpInfo: {
+    marginLeft: theme.spacing(1),
+  },
+  logicalResources: {
+    maxWidth: 200,
+  },
+  labels: {
+    maxWidth: 200,
+  },
+  stateMessage: {
+    maxWidth: 200,
+  },
+});
 
 /**
  * A single row that represents the node information only.
@@ -103,7 +101,7 @@ export const NodeRow = ({
     logicalResources,
   } = node;
 
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
 
   const objectStoreTotalMemory =
     raylet.objectStoreAvailableMemory + raylet.objectStoreUsedMemory;
@@ -118,9 +116,9 @@ export const NodeRow = ({
       <TableCell>
         <IconButton size="small" onClick={onExpandButtonClick}>
           {!expanded ? (
-            <RiArrowRightSLine className={classes.expandCollapseIcon} />
+            <Box component={RiArrowRightSLine} sx={styles.expandCollapseIcon} />
           ) : (
-            <RiArrowDownSLine className={classes.expandCollapseIcon} />
+            <Box component={RiArrowDownSLine} sx={styles.expandCollapseIcon} />
           )}
         </IconButton>
       </TableCell>
@@ -133,7 +131,7 @@ export const NodeRow = ({
       <TableCell align="center">
         {raylet.stateMessage ? (
           <CodeDialogButtonWithPreview
-            className={classes.stateMessage}
+            sx={styles.stateMessage}
             title="State Message"
             code={raylet.stateMessage}
           />
@@ -147,7 +145,7 @@ export const NodeRow = ({
             <NodeLink
               nodeId={raylet.nodeId}
               to={`nodes/${raylet.nodeId}`}
-              className={classes.idCol}
+              sx={styles.idCol}
             />
           </div>
         </Tooltip>
@@ -216,7 +214,7 @@ export const NodeRow = ({
       <TableCell align="center">
         {logicalResources ? (
           <CodeDialogButtonWithPreview
-            className={classes.logicalResources}
+            sx={styles.logicalResources}
             title="Logical Resources"
             code={logicalResources}
           />
@@ -226,7 +224,7 @@ export const NodeRow = ({
       </TableCell>
       <TableCell align="center">
         <CodeDialogButtonWithPreview
-          className={classes.labels}
+          sx={styles.labels}
           title="Labels"
           code={raylet.labels}
         />
@@ -250,7 +248,7 @@ type WorkerRowProps = {
  * A single row that represents the data of a Worker
  */
 export const WorkerRow = ({ node, worker }: WorkerRowProps) => {
-  const classes = rowStyles();
+  const styles = rowStyles(useTheme());
 
   const {
     ip,
@@ -283,7 +281,9 @@ export const WorkerRow = ({ node, worker }: WorkerRowProps) => {
       <TableCell align="center">
         {coreWorker && (
           <Tooltip title={coreWorker.workerId} arrow>
-            <span className={classes.idCol}>{coreWorker.workerId}</span>
+            <Box component="span" sx={styles.idCol}>
+              {coreWorker.workerId}
+            </Box>
           </Tooltip>
         )}
       </TableCell>

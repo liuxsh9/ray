@@ -1,4 +1,4 @@
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Theme, useTheme } from "@mui/material";
 import React from "react";
 import Loading from "../../components/Loading";
 import { MetadataSection } from "../../components/MetadataSection";
@@ -8,21 +8,21 @@ import { MainNavPageInfo } from "../layout/mainNavContext";
 
 import { useClusterDetail } from "./hook/useClusterDetail";
 
-const useStyle = makeStyles((theme) => ({
+const useStyle = (theme: Theme) => ({
   root: {
     padding: theme.spacing(2),
   },
-}));
+});
 
 export const ClusterDetailInfoPage = () => {
   // TODO(aguo): Add more content to this page!
 
-  const classes = useStyle();
+  const styles = useStyle(useTheme());
   const { clusterDetail, msg, isLoading } = useClusterDetail();
 
   if (!clusterDetail) {
     return (
-      <div className={classes.root}>
+      <Box sx={styles.root}>
         <MainNavPageInfo
           pageInfo={{
             title: "Cluster Info",
@@ -36,12 +36,12 @@ export const ClusterDetailInfoPage = () => {
           <br />
           Request Status: {msg} <br />
         </TitleCard>
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       <MainNavPageInfo
         pageInfo={{
           title: "Cluster Info",
@@ -100,6 +100,6 @@ export const ClusterDetailInfoPage = () => {
           ]}
         />
       </TitleCard>
-    </div>
+    </Box>
   );
 };

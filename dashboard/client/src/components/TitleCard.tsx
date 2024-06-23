@@ -1,8 +1,7 @@
-import { Paper } from "@mui/material";
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Paper, Theme, useTheme } from "@mui/material";
 import React, { PropsWithChildren, ReactNode } from "react";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = (theme: Theme) => ({
   card: {
     padding: theme.spacing(2),
     paddingTop: theme.spacing(1.5),
@@ -15,17 +14,17 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(1),
   },
   body: {},
-}));
+});
 
 const TitleCard = ({
   title,
   children,
 }: PropsWithChildren<{ title?: ReactNode | string }>) => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   return (
-    <Paper className={classes.card} elevation={0}>
-      {title && <div className={classes.title}>{title}</div>}
-      <div className={classes.body}>{children}</div>
+    <Paper sx={styles.card} elevation={0}>
+      {title && <Box sx={styles.title}>{title}</Box>}
+      <Box sx={styles.body}>{children}</Box>
     </Paper>
   );
 };

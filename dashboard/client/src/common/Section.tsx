@@ -1,21 +1,21 @@
-import { Box, BoxProps, Paper, Typography } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
-import classNames from "classnames";
+import {
+  Box,
+  BoxProps,
+  Paper,
+  Theme,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import React, { PropsWithChildren } from "react";
 import { ClassNameProps } from "./props";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    contentContainer: {
-      padding: theme.spacing(2),
-      height: "100%",
-    },
-    contentContainerNoTopPadding: {
-      paddingTop: 0,
-    },
+const useStyles = (theme: Theme) => ({
+  contentContainer: (noTopPadding: boolean) => ({
+    padding: theme.spacing(2),
+    height: "100%",
+    paddingTop: noTopPadding ? 0 : undefined,
   }),
-);
+});
 
 type SectionProps = {
   title?: string;
@@ -30,7 +30,7 @@ export const Section = ({
   noTopPadding = false,
   ...props
 }: PropsWithChildren<SectionProps>) => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
 
   return (
     <Box className={className} {...props}>
@@ -41,9 +41,7 @@ export const Section = ({
       )}
       <Paper
         variant="outlined"
-        className={classNames(classes.contentContainer, {
-          [classes.contentContainerNoTopPadding]: noTopPadding,
-        })}
+        sx={Object.assign({}, styles.contentContainer(noTopPadding))}
       >
         {children}
       </Paper>

@@ -1,6 +1,4 @@
-import { Box, Typography } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Theme, Typography, useTheme } from "@mui/material";
 import dayjs from "dayjs";
 import low from "lowlight";
 import React, {
@@ -92,13 +90,11 @@ export type LogVirtualViewProps = {
   endTime?: string;
 };
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    warningInfo: {
-      color: theme.palette.error.main,
-    },
-  }),
-);
+const useStyles = (theme: Theme) => ({
+  warningInfo: {
+    color: theme.palette.error.main,
+  },
+});
 
 type LogLineDetailDialogProps = {
   formattedLogLine: string;
@@ -180,7 +176,7 @@ const LogVirtualView: React.FC<LogVirtualViewProps> = ({
   const timmer = useRef<ReturnType<typeof setTimeout>>();
   const el = useRef<List>(null);
   const outter = useRef<HTMLDivElement>(null);
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   if (listRef) {
     listRef.current = outter.current;
   }
@@ -307,11 +303,11 @@ const LogVirtualView: React.FC<LogVirtualViewProps> = ({
   return (
     <div>
       {logs && logs.length > MAX_LINES_FOR_LOGS && (
-        <p className={classes.warningInfo}>
+        <Box component="p" sx={styles.warningInfo}>
           [Truncation warning] This log has been truncated and only the latest{" "}
           {MAX_LINES_FOR_LOGS} lines are displayed. Click "Download" button
           above to see the full log
-        </p>
+        </Box>
       )}
       <List
         height={height || (content.split("\n").length + 1) * 18}

@@ -11,6 +11,7 @@ import {
   TextFieldProps,
   Tooltip,
   Typography,
+  useTheme,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Pagination from "@mui/material/Pagination";
@@ -62,7 +63,7 @@ const TaskTable = ({
     constrainedPage,
     maxPage,
   } = sliceToPage(taskList, pageNo, pageSize);
-  const classes = rowStyles();
+  const styles = rowStyles(useTheme());
 
   const columns = [
     { label: "ID" },
@@ -194,7 +195,7 @@ const TaskTable = ({
           <StateCounter type="task" list={taskList} />
         </div>
       </div>
-      <div className={classes.tableContainer}>
+      <Box sx={styles.tableContainer}>
         <Table>
           <TableHead>
             <TableRow>
@@ -207,9 +208,7 @@ const TaskTable = ({
                   >
                     {label}
                     {helpInfo && (
-                      <HelpInfo className={classes.helpInfo}>
-                        {helpInfo}
-                      </HelpInfo>
+                      <HelpInfo sx={styles.helpInfo}>{helpInfo}</HelpInfo>
                     )}
                   </Box>
                 </TableCell>
@@ -236,8 +235,12 @@ const TaskTable = ({
               return (
                 <TableRow key={task_id}>
                   <TableCell align="center">
-                    <Tooltip className={classes.idCol} title={task_id} arrow>
-                      <Link component={RouterLink} to={`tasks/${task_id}`}>
+                    <Tooltip title={task_id} arrow>
+                      <Link
+                        sx={styles.idCol}
+                        component={RouterLink}
+                        to={`tasks/${task_id}`}
+                      >
                         {task_id}
                       </Link>
                     </Tooltip>
@@ -262,44 +265,41 @@ const TaskTable = ({
                   </TableCell>
                   <TableCell align="center">{func_or_class_name}</TableCell>
                   <TableCell align="center">
-                    <Tooltip
-                      className={classes.idCol}
-                      title={node_id ? node_id : "-"}
-                      arrow
-                    >
-                      {node_id ? <NodeLink nodeId={node_id} /> : <div>-</div>}
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Tooltip
-                      className={classes.idCol}
-                      title={actor_id ? actor_id : "-"}
-                      arrow
-                    >
-                      {actor_id ? (
-                        <ActorLink actorId={actor_id} />
+                    <Tooltip title={node_id ? node_id : "-"} arrow>
+                      {node_id ? (
+                        <NodeLink sx={styles.idCol} nodeId={node_id} />
                       ) : (
-                        <div>-</div>
+                        <Box sx={styles.idCol}>-</Box>
                       )}
                     </Tooltip>
                   </TableCell>
                   <TableCell align="center">
                     <Tooltip
-                      className={classes.idCol}
-                      title={worker_id ? worker_id : "-"}
+                      sx={styles.idCol}
+                      title={actor_id ? actor_id : "-"}
                       arrow
                     >
-                      <div>{worker_id ? worker_id : "-"}</div>
+                      {actor_id ? (
+                        <ActorLink sx={styles.idCol} actorId={actor_id} />
+                      ) : (
+                        <Box sx={styles.idCol}>-</Box>
+                      )}
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title={worker_id ? worker_id : "-"} arrow>
+                      <Box sx={styles.idCol}>{worker_id ? worker_id : "-"}</Box>
                     </Tooltip>
                   </TableCell>
                   <TableCell align="center">{type}</TableCell>
                   <TableCell align="center">
                     <Tooltip
-                      className={classes.idCol}
                       title={placement_group_id ? placement_group_id : "-"}
                       arrow
                     >
-                      <div>{placement_group_id ? placement_group_id : "-"}</div>
+                      <Box sx={styles.idCol}>
+                        {placement_group_id ? placement_group_id : "-"}
+                      </Box>
                     </Tooltip>
                   </TableCell>
                   <TableCell align="center">
@@ -317,7 +317,7 @@ const TaskTable = ({
             })}
           </TableBody>
         </Table>
-      </div>
+      </Box>
     </div>
   );
 };

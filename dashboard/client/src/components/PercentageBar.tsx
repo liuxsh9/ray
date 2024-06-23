@@ -1,7 +1,7 @@
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Theme, useTheme } from "@mui/material";
 import React, { PropsWithChildren } from "react";
 
-const useStyle = makeStyles((theme) => ({
+const useStyle = (theme: Theme) => ({
   container: {
     background: "linear-gradient(45deg, #21CBF3ee 30%, #2196F3ee 90%)",
     border: `1px solid #ffffffbb`,
@@ -10,7 +10,7 @@ const useStyle = makeStyles((theme) => ({
     lineHeight: "18px",
     position: "relative",
     boxSizing: "content-box",
-    borderRadius: 4,
+    borderRadius: "4px",
     flexGrow: 1,
   },
   displayBar: {
@@ -19,7 +19,7 @@ const useStyle = makeStyles((theme) => ({
     right: 0,
     height: 18,
     transition: "0.5s width",
-    borderRadius: 2,
+    borderRadius: "2px",
     borderTopLeftRadius: 0,
     borderBottomLeftRadius: 0,
     border: "2px solid transparent",
@@ -34,25 +34,25 @@ const useStyle = makeStyles((theme) => ({
     textAlign: "center",
     whiteSpace: "nowrap",
   },
-}));
+});
 
 const PercentageBar = (
   props: PropsWithChildren<{ num: number; total: number }>,
 ) => {
   const { num, total } = props;
-  const classes = useStyle();
+  const styles = useStyle(useTheme());
   const per = Math.round((num / total) * 100);
 
   return (
-    <div className={classes.container}>
-      <div
-        className={classes.displayBar}
+    <Box sx={styles.container}>
+      <Box
+        sx={styles.displayBar}
         style={{
           width: `${Math.min(Math.max(0, 100 - per), 100)}%`,
         }}
       />
-      <div className={classes.text}>{props.children}</div>
-    </div>
+      <Box sx={styles.text}>{props.children}</Box>
+    </Box>
   );
 };
 

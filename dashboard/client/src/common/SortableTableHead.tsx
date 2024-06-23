@@ -1,25 +1,28 @@
-import { TableHead, TableRow, TableSortLabel } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
+import {
+  Box,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  Theme,
+  useTheme,
+} from "@mui/material";
 import React from "react";
 import { StyledTableCell } from "./TableCell";
 import { Order } from "./tableUtils";
 
-const useSortableTableHeadStyles = makeStyles(() =>
-  createStyles({
-    visuallyHidden: {
-      border: 0,
-      clip: "rect(0 0 0 0)",
-      height: 1,
-      margin: -1,
-      overflow: "hidden",
-      padding: 0,
-      position: "absolute",
-      top: 20,
-      width: 1,
-    },
-  }),
-);
+const useSortableTableHeadStyles = (theme: Theme) => ({
+  visuallyHidden: {
+    border: 0,
+    clip: "rect(0 0 0 0)",
+    height: 1,
+    margin: -1,
+    overflow: "hidden",
+    padding: 0,
+    position: "absolute",
+    top: 20,
+    width: 1,
+  },
+});
 
 export type HeaderInfo<T> = {
   sortable: boolean;
@@ -38,7 +41,7 @@ type SortableTableHeadProps<T> = {
 
 const SortableTableHead = <T,>(props: SortableTableHeadProps<T>) => {
   const { order, orderBy, onRequestSort, headerInfo, firstColumnEmpty } = props;
-  const classes = useSortableTableHeadStyles();
+  const styles = useSortableTableHeadStyles(useTheme());
   const createSortHandler = (id: T) => (event: React.MouseEvent<unknown>) => {
     onRequestSort(event, id);
   };
@@ -61,11 +64,11 @@ const SortableTableHead = <T,>(props: SortableTableHeadProps<T>) => {
                 >
                   {headerInfo.label}
                   {orderBy === headerInfo.id ? (
-                    <span className={classes.visuallyHidden}>
+                    <Box component="span" sx={styles.visuallyHidden}>
                       {order === "desc"
                         ? "sorted descending"
                         : "sorted ascending"}
-                    </span>
+                    </Box>
                   ) : null}
                 </TableSortLabel>
               </StyledTableCell>

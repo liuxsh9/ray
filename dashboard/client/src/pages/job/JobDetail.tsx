@@ -1,5 +1,4 @@
-import { Box } from "@mui/material";
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Theme, useTheme } from "@mui/material";
 import React, { useRef, useState } from "react";
 import useSWR from "swr";
 import { CollapsibleSection } from "../../common/CollapsibleSection";
@@ -25,7 +24,7 @@ import { JobDriverLogs } from "./JobDriverLogs";
 import { JobProgressBar } from "./JobProgressBar";
 import { TaskTimeline } from "./TaskTimeline";
 
-const useStyle = makeStyles((theme) => ({
+const useStyle = (theme: Theme) => ({
   root: {
     padding: theme.spacing(2),
     backgroundColor: "white",
@@ -42,10 +41,10 @@ const useStyle = makeStyles((theme) => ({
   nodeCountCard: {
     flex: "1 0 500px",
   },
-}));
+});
 
 export const JobDetailChartsPage = () => {
-  const classes = useStyle();
+  const styles = useStyle(useTheme());
   const { job, msg, isLoading, params } = useJobDetail();
 
   const [taskListFilter, setTaskListFilter] = useState<string>();
@@ -72,14 +71,14 @@ export const JobDetailChartsPage = () => {
 
   if (!job) {
     return (
-      <div className={classes.root}>
+      <Box sx={styles.root}>
         <Loading loading={isLoading} />
         <TitleCard title={`JOB - ${params.id}`}>
           <StatusChip type="job" status="LOADING" />
           <br />
           Request Status: {msg} <br />
         </TitleCard>
-      </div>
+      </Box>
     );
   }
 
@@ -118,14 +117,11 @@ export const JobDetailChartsPage = () => {
   };
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       <JobMetadataSection job={job} />
 
       {data?.datasets && data.datasets.length > 0 && (
-        <CollapsibleSection
-          title="Ray Data Overview"
-          className={classes.section}
-        >
+        <CollapsibleSection title="Ray Data Overview" sx={styles.section}>
           <Section>
             <DataOverview datasets={data.datasets} />
           </Section>
@@ -135,7 +131,7 @@ export const JobDetailChartsPage = () => {
       <CollapsibleSection
         title="Ray Core Overview"
         startExpanded
-        className={classes.section}
+        sx={styles.section}
       >
         <Section>
           <JobProgressBar
@@ -146,11 +142,7 @@ export const JobDetailChartsPage = () => {
         </Section>
       </CollapsibleSection>
 
-      <CollapsibleSection
-        title="Logs"
-        startExpanded
-        className={classes.section}
-      >
+      <CollapsibleSection title="Logs" startExpanded sx={styles.section}>
         <Section noTopPadding>
           <JobDriverLogs job={job} />
         </Section>
@@ -160,7 +152,7 @@ export const JobDetailChartsPage = () => {
         <CollapsibleSection
           title="Task Timeline (beta)"
           startExpanded
-          className={classes.section}
+          sx={styles.section}
         >
           <Section>
             <TaskTimeline jobId={job.job_id} />
@@ -171,16 +163,16 @@ export const JobDetailChartsPage = () => {
       <CollapsibleSection
         title="Cluster status and autoscaler"
         startExpanded
-        className={classes.section}
+        sx={styles.section}
       >
         <Box
           display="flex"
           flexDirection="row"
           gap={3}
           alignItems="stretch"
-          className={classes.autoscalerSection}
+          sx={styles.autoscalerSection}
         >
-          <NodeCountCard className={classes.nodeCountCard} />
+          <NodeCountCard sx={styles.nodeCountCard} />
           <Section flex="1 1 500px">
             <NodeStatusCard clusterStatus={clusterStatus} />
           </Section>
@@ -199,7 +191,7 @@ export const JobDetailChartsPage = () => {
             onExpandButtonClick={() => {
               setTaskTableExpanded(!taskTableExpanded);
             }}
-            className={classes.section}
+            sx={styles.section}
           >
             <Section>
               <TaskList
@@ -217,7 +209,7 @@ export const JobDetailChartsPage = () => {
             onExpandButtonClick={() => {
               setActorTableExpanded(!actorTableExpanded);
             }}
-            className={classes.section}
+            sx={styles.section}
           >
             <Section>
               <ActorList
@@ -229,16 +221,13 @@ export const JobDetailChartsPage = () => {
             </Section>
           </CollapsibleSection>
 
-          <CollapsibleSection
-            title="Placement Group Table"
-            className={classes.section}
-          >
+          <CollapsibleSection title="Placement Group Table" sx={styles.section}>
             <Section>
               <PlacementGroupList jobId={job.job_id} />
             </Section>
           </CollapsibleSection>
         </React.Fragment>
       )}
-    </div>
+    </Box>
   );
 };

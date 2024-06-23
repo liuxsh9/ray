@@ -1,25 +1,28 @@
-import { Button, Link, Typography } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
+import {
+  Button,
+  Link,
+  SxProps,
+  Theme,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import React from "react";
 import { RiDownload2Line } from "react-icons/ri";
 import { ClassNameProps } from "../../common/props";
 import { downloadTaskTimelineHref } from "../../service/task";
 
-const useStyle = makeStyles((theme) =>
-  createStyles({
-    button: {
-      marginTop: theme.spacing(2),
-    },
-  }),
-);
+const useStyle = (theme: Theme) => ({
+  button: {
+    marginTop: theme.spacing(2),
+  },
+});
 
 type TaskTimelineProps = {
   jobId: string;
 };
 
 export const TaskTimeline = ({ jobId }: TaskTimelineProps) => {
-  const classes = useStyle();
+  const styles = useStyle(useTheme());
 
   return (
     <div>
@@ -36,21 +39,24 @@ export const TaskTimeline = ({ jobId }: TaskTimelineProps) => {
         <Link href="chrome://tracing">chrome://tracing</Link>. You can use the
         tool by visiting chrome://tracing using your address bar.
       </Typography>
-      <TimelineDownloadButton className={classes.button} jobId={jobId} />
+      <TimelineDownloadButton sx={styles.button} jobId={jobId} />
     </div>
   );
 };
 
 type TimelineDownloadButtonProps = {
   jobId: string;
+  sx?: SxProps<Theme>;
 } & ClassNameProps;
 
 const TimelineDownloadButton = ({
   jobId,
   className,
+  sx,
 }: TimelineDownloadButtonProps) => {
   return (
     <Button
+      sx={sx}
       className={className}
       variant="outlined"
       startIcon={<RiDownload2Line />}

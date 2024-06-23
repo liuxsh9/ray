@@ -10,10 +10,10 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Theme,
   Typography,
+  useTheme,
 } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
 import React, { ReactElement } from "react";
 import { CollapsibleSection } from "../../common/CollapsibleSection";
 import { sliceToPage } from "../../common/util";
@@ -28,28 +28,26 @@ import {
 } from "./ServeMetricsSection";
 import { ServeSystemPreview } from "./ServeSystemDetails";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-      padding: theme.spacing(3),
-    },
-    table: {
-      tableLayout: "fixed",
-    },
-    serveInstanceWarning: {
-      marginBottom: theme.spacing(2),
-    },
-    helpInfo: {
-      marginLeft: theme.spacing(1),
-    },
-    deploymentsSection: {
-      marginTop: theme.spacing(4),
-    },
-    section: {
-      marginTop: theme.spacing(4),
-    },
-  }),
-);
+const useStyles = (theme: Theme) => ({
+  root: {
+    padding: theme.spacing(3),
+  },
+  table: {
+    tableLayout: "fixed",
+  },
+  serveInstanceWarning: {
+    marginBottom: theme.spacing(2),
+  },
+  helpInfo: {
+    marginLeft: theme.spacing(1),
+  },
+  deploymentsSection: {
+    marginTop: theme.spacing(4),
+  },
+  section: {
+    marginTop: theme.spacing(4),
+  },
+});
 
 const columns: { label: string; helpInfo?: ReactElement; width?: string }[] = [
   { label: "" }, // Empty space for expand button
@@ -64,7 +62,7 @@ const columns: { label: string; helpInfo?: ReactElement; width?: string }[] = [
 ];
 
 export const ServeDeploymentsListPage = () => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   const {
     serveDetails,
     error,
@@ -90,9 +88,9 @@ export const ServeDeploymentsListPage = () => {
   } = sliceToPage(serveApplications, page.pageNo, page.pageSize);
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       {serveDetails.http_options === undefined ? (
-        <Alert className={classes.serveInstanceWarning} severity="warning">
+        <Alert sx={styles.serveInstanceWarning} severity="warning">
           Serve not started. Please deploy a serve application first.
         </Alert>
       ) : (
@@ -106,7 +104,7 @@ export const ServeDeploymentsListPage = () => {
           <CollapsibleSection
             title="Applications / Deployments"
             startExpanded
-            className={classes.deploymentsSection}
+            sx={styles.deploymentsSection}
           >
             <TableContainer>
               <TextField
@@ -128,7 +126,7 @@ export const ServeDeploymentsListPage = () => {
                 page={constrainedPage}
                 onChange={(e, pageNo) => setPage("pageNo", pageNo)}
               />
-              <Table className={classes.table}>
+              <Table sx={styles.table}>
                 <TableHead>
                   <TableRow>
                     {columns.map(({ label, helpInfo, width }) => (
@@ -144,9 +142,7 @@ export const ServeDeploymentsListPage = () => {
                         >
                           {label}
                           {helpInfo && (
-                            <HelpInfo className={classes.helpInfo}>
-                              {helpInfo}
-                            </HelpInfo>
+                            <HelpInfo sx={styles.helpInfo}>{helpInfo}</HelpInfo>
                           )}
                         </Box>
                       </TableCell>
@@ -165,11 +161,7 @@ export const ServeDeploymentsListPage = () => {
               </Table>
             </TableContainer>
           </CollapsibleSection>
-          <CollapsibleSection
-            title="Logs"
-            startExpanded
-            className={classes.section}
-          >
+          <CollapsibleSection title="Logs" startExpanded sx={styles.section}>
             <ServeEntityLogViewer
               controller={serveDetails.controller_info}
               proxies={proxies}
@@ -179,9 +171,9 @@ export const ServeDeploymentsListPage = () => {
         </React.Fragment>
       )}
       <ServeMetricsSection
-        className={classes.section}
+        sx={styles.section}
         metricsConfig={APPS_METRICS_CONFIG}
       />
-    </div>
+    </Box>
   );
 };

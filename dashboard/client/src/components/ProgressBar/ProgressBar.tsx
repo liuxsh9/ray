@@ -1,74 +1,70 @@
-import { Box, TooltipProps, Typography } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Theme, TooltipProps, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { RiArrowDownSLine, RiArrowRightSLine } from "react-icons/ri";
 import { HelpInfo, StyledTooltip } from "../Tooltip";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-      display: "flex",
-      flexDirection: "column",
+const useStyles = (theme: Theme) => ({
+  root: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  legendRoot: {
+    display: "flex",
+    flexDirection: "row",
+  },
+  legendItemContainer: {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "center",
+    "&:not(:first-child)": {
+      marginLeft: theme.spacing(1.5),
     },
-    legendRoot: {
-      display: "flex",
-      flexDirection: "row",
+    "&:not(:last-child)": {
+      marginRight: theme.spacing(1.5),
     },
-    legendItemContainer: {
-      display: "flex",
-      flexDirection: "row",
-      flexWrap: "nowrap",
-      alignItems: "center",
-      "&:not(:first-child)": {
-        marginLeft: theme.spacing(1.5),
-      },
-      "&:not(:last-child)": {
-        marginRight: theme.spacing(1.5),
-      },
+  },
+  colorLegend: {
+    width: 16,
+    height: 16,
+    borderRadius: "4px",
+    marginRight: theme.spacing(1),
+  },
+  hint: {
+    marginLeft: theme.spacing(0.5),
+  },
+  progressBarContainer: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  icon: {
+    width: 16,
+    height: 16,
+    marginRight: theme.spacing(1),
+  },
+  progressBarRoot: {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    width: "100%",
+    height: 8,
+    backgroundColor: "white",
+    borderRadius: "6px",
+    overflow: "hidden",
+  },
+  segment: {
+    "&:not(:last-child)": {
+      marginRight: "1px",
     },
-    colorLegend: {
-      width: 16,
-      height: 16,
-      borderRadius: 4,
-      marginRight: theme.spacing(1),
-    },
-    hint: {
-      marginLeft: theme.spacing(0.5),
-    },
-    progressBarContainer: {
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    icon: {
-      width: 16,
-      height: 16,
-      marginRight: theme.spacing(1),
-    },
-    progressBarRoot: {
-      display: "flex",
-      flexDirection: "row",
-      flexWrap: "nowrap",
-      width: "100%",
-      height: 8,
-      backgroundColor: "white",
-      borderRadius: 6,
-      overflow: "hidden",
-    },
-    segment: {
-      "&:not(:last-child)": {
-        marginRight: 1,
-      },
-    },
-    progressTotal: {
-      flex: "1 0 40px",
-      marginLeft: theme.spacing(1),
-      textAlign: "end",
-      whiteSpace: "nowrap",
-    },
-  }),
-);
+  },
+  progressTotal: {
+    flex: "1 0 40px",
+    marginLeft: theme.spacing(1),
+    textAlign: "end",
+    whiteSpace: "nowrap",
+  },
+});
 
 export type ProgressBarSegment = {
   /**
@@ -148,7 +144,7 @@ export const ProgressBar = ({
   onClick,
   controls,
 }: ProgressBarProps) => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   const segmentTotal = progress.reduce((acc, { value }) => acc + value, 0);
   const finalTotal = total ?? segmentTotal;
 
@@ -169,7 +165,7 @@ export const ProgressBar = ({
   const filteredSegments = segments.filter(({ value }) => value);
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       {(showLegend || controls) && (
         <Box
           display="flex"
@@ -178,53 +174,54 @@ export const ProgressBar = ({
           marginBottom={1}
         >
           {showLegend && (
-            <div className={classes.legendRoot}>
-              <div className={classes.legendItemContainer}>
-                <div
-                  className={classes.colorLegend}
+            <Box sx={styles.legendRoot}>
+              <Box sx={styles.legendItemContainer}>
+                <Box
+                  sx={styles.colorLegend}
                   style={{ backgroundColor: "black" }}
                 />
                 <Typography>Total: {finalTotal}</Typography>
-              </div>
+              </Box>
               {filteredSegments.map(({ value, label, hint, color }) => (
-                <div key={label} className={classes.legendItemContainer}>
-                  <div
-                    className={classes.colorLegend}
+                <Box key={label} sx={styles.legendItemContainer}>
+                  <Box
+                    sx={styles.colorLegend}
                     style={{ backgroundColor: color }}
                   />
                   <Typography>
                     {label}: {value}
                   </Typography>
-                  {hint && <HelpInfo className={classes.hint}>{hint}</HelpInfo>}
-                </div>
+                  {hint && <HelpInfo sx={styles.hint}>{hint}</HelpInfo>}
+                </Box>
               ))}
-            </div>
+            </Box>
           )}
           {controls && controls}
         </Box>
       )}
-      <div className={classes.progressBarContainer} onClick={onClick}>
+      <Box sx={styles.progressBarContainer} onClick={onClick}>
         {expanded !== undefined &&
           (expanded ? (
-            <RiArrowDownSLine className={classes.icon} />
+            <Box component={RiArrowDownSLine} sx={styles.icon} />
           ) : (
-            <RiArrowRightSLine className={classes.icon} />
+            <Box component={RiArrowRightSLine} sx={styles.icon} />
           ))}
         <LegendTooltip
           showTooltip={showTooltip}
           total={finalTotal}
           segments={filteredSegments}
         >
-          <div
-            className={classes.progressBarRoot}
+          <Box
+            sx={styles.progressBarRoot}
             style={{
               backgroundColor: segmentTotal === 0 ? "lightGrey" : "white",
             }}
           >
             {filteredSegments.map(({ color, label, value }) => (
-              <span
+              <Box
+                component="span"
                 key={label}
-                className={classes.segment}
+                sx={styles.segment}
                 style={{
                   flex: value,
                   backgroundColor: color,
@@ -232,37 +229,35 @@ export const ProgressBar = ({
                 data-testid="progress-bar-segment"
               />
             ))}
-          </div>
+          </Box>
         </LegendTooltip>
         {showTotalProgress !== undefined && (
-          <div className={classes.progressTotal}>
+          <Box sx={styles.progressTotal}>
             {showTotalProgress} / {finalTotal}
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 
-const useLegendStyles = makeStyles((theme) =>
-  createStyles({
-    legendItemContainer: {
-      display: "flex",
-      flexDirection: "row",
-      flexWrap: "nowrap",
-      alignItems: "center",
-      "&:not(:first-child)": {
-        marginTop: theme.spacing(1),
-      },
+const useLegendStyles = (theme: Theme) => ({
+  legendItemContainer: {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "center",
+    "&:not(:first-child)": {
+      marginTop: theme.spacing(1),
     },
-    colorLegend: {
-      width: 16,
-      height: 16,
-      borderRadius: 4,
-      marginRight: theme.spacing(1),
-    },
-  }),
-);
+  },
+  colorLegend: {
+    width: 16,
+    height: 16,
+    borderRadius: "4px",
+    marginRight: theme.spacing(1),
+  },
+});
 
 type LegendTooltipProps = {
   showTooltip: boolean;
@@ -277,7 +272,7 @@ const LegendTooltip = ({
   total,
   children,
 }: LegendTooltipProps) => {
-  const classes = useLegendStyles();
+  const styles = useLegendStyles(useTheme());
 
   if (showTooltip) {
     return (
@@ -285,23 +280,23 @@ const LegendTooltip = ({
         placement="right"
         title={
           <Box>
-            <div className={classes.legendItemContainer}>
-              <div
-                className={classes.colorLegend}
+            <Box sx={styles.legendItemContainer}>
+              <Box
+                sx={styles.colorLegend}
                 style={{ backgroundColor: "black" }}
               />
               <Typography>Total: {total}</Typography>
-            </div>
+            </Box>
             {segments.map(({ value, label, color }) => (
-              <div key={label} className={classes.legendItemContainer}>
-                <div
-                  className={classes.colorLegend}
+              <Box key={label} sx={styles.legendItemContainer}>
+                <Box
+                  sx={styles.colorLegend}
                   style={{ backgroundColor: color }}
                 />
                 <Typography>
                   {label}: {value}
                 </Typography>
-              </div>
+              </Box>
             ))}
           </Box>
         }

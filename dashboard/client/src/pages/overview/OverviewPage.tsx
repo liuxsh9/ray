@@ -1,6 +1,4 @@
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
-import classNames from "classnames";
+import { Box, Theme, useTheme } from "@mui/material";
 import React from "react";
 import { CollapsibleSection } from "../../common/CollapsibleSection";
 import {
@@ -16,92 +14,88 @@ import { OverviewCard } from "./cards/OverviewCard";
 import { RecentJobsCard } from "./cards/RecentJobsCard";
 import { RecentServeCard } from "./cards/RecentServeCard";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-      padding: theme.spacing(3),
-      backgroundColor: "white",
+const useStyles = (theme: Theme) => ({
+  root: {
+    padding: theme.spacing(3),
+    backgroundColor: "white",
+  },
+  overviewCardsContainer: {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: theme.spacing(4),
+    gap: theme.spacing(3),
+    [theme.breakpoints.up("md")]: {
+      flexWrap: "nowrap",
     },
-    overviewCardsContainer: {
-      display: "flex",
-      flexDirection: "row",
-      flexWrap: "wrap",
-      marginBottom: theme.spacing(4),
-      gap: theme.spacing(3),
-      [theme.breakpoints.up("md")]: {
-        flexWrap: "nowrap",
-      },
+  },
+  overviewCard: {
+    flex: "1 0 448px",
+    maxWidth: "100%",
+    [theme.breakpoints.up("md")]: {
+      // Calculate max width based on 1/3 of the total width minus padding between cards
+      maxWidth: `calc((100% - ${theme.spacing(3)} * 2) / 3)`,
     },
-    overviewCard: {
-      flex: "1 0 448px",
-      maxWidth: "100%",
-      [theme.breakpoints.up("md")]: {
-        // Calculate max width based on 1/3 of the total width minus padding between cards
-        maxWidth: `calc((100% - ${theme.spacing(3)} * 2) / 3)`,
-      },
-    },
-    autoscalerCard: {
-      padding: theme.spacing(2, 3),
-    },
-    section: {
-      marginTop: theme.spacing(4),
-    },
-  }),
-);
+  },
+  autoscalerCard: {
+    padding: theme.spacing(2, 3),
+  },
+  section: {
+    marginTop: theme.spacing(4),
+  },
+});
 
 export const OverviewPage = () => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
 
   const { clusterStatus } = useRayStatus();
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       <MainNavPageInfo
         pageInfo={{ title: "Overview", id: "overview", path: "/overview" }}
       />
-      <div className={classes.overviewCardsContainer}>
-        <ClusterUtilizationCard className={classes.overviewCard} />
-        <RecentJobsCard className={classes.overviewCard} />
-        <RecentServeCard className={classes.overviewCard} />
-      </div>
+      <Box sx={styles.overviewCardsContainer}>
+        <ClusterUtilizationCard sx={styles.overviewCard} />
+        <RecentJobsCard sx={styles.overviewCard} />
+        <RecentServeCard sx={styles.overviewCard} />
+      </Box>
 
       <CollapsibleSection
-        className={classes.section}
+        sx={styles.section}
         title="Cluster status and autoscaler"
         startExpanded
       >
         {
-          <div className={classes.overviewCardsContainer}>
-            <NodeCountCard className={classes.overviewCard} />
+          <Box sx={styles.overviewCardsContainer}>
+            <NodeCountCard sx={styles.overviewCard} />
             <OverviewCard
-              className={classNames(
-                classes.root,
-                classes.overviewCard,
-                classes.autoscalerCard,
+              sx={Object.assign(
+                {},
+                styles.root,
+                styles.overviewCard,
+                styles.autoscalerCard,
               )}
             >
               <NodeStatusCard clusterStatus={clusterStatus} />
             </OverviewCard>
             <OverviewCard
-              className={classNames(
-                classes.root,
-                classes.overviewCard,
-                classes.autoscalerCard,
+              sx={Object.assign(
+                {},
+                styles.root,
+                styles.overviewCard,
+                styles.autoscalerCard,
               )}
             >
               <ResourceStatusCard clusterStatus={clusterStatus} />
             </OverviewCard>
-          </div>
+          </Box>
         }
       </CollapsibleSection>
 
-      <CollapsibleSection
-        className={classes.section}
-        title="Events"
-        startExpanded
-      >
+      <CollapsibleSection sx={styles.section} title="Events" startExpanded>
         <EventTable />
       </CollapsibleSection>
-    </div>
+    </Box>
   );
 };

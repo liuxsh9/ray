@@ -8,12 +8,12 @@ import {
   TableRow,
   TextField,
   TextFieldProps,
+  Theme,
   Typography,
+  useTheme,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Pagination from "@mui/material/Pagination";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
 import React, { useState } from "react";
 import { RiArrowDownSLine, RiArrowRightSLine } from "react-icons/ri";
 import { formatDateFromTimeMs } from "../common/formatUtils";
@@ -86,7 +86,7 @@ const DataOverviewTable = ({
     maxPage,
   } = sliceToPage(datasetList, pageNo, pageSize);
 
-  const classes = rowStyles();
+  const styles = rowStyles(useTheme());
 
   return (
     <div>
@@ -127,9 +127,7 @@ const DataOverviewTable = ({
                   >
                     {label}
                     {helpInfo && (
-                      <HelpInfo className={classes.helpInfo}>
-                        {helpInfo}
-                      </HelpInfo>
+                      <HelpInfo sx={styles.helpInfo}>{helpInfo}</HelpInfo>
                     )}
                   </Box>
                 </TableCell>
@@ -158,14 +156,12 @@ const DataOverviewTable = ({
   );
 };
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    icon: {
-      width: 16,
-      height: 16,
-    },
-  }),
-);
+const useStyles = (theme: Theme) => ({
+  icon: {
+    width: 16,
+    height: 16,
+  },
+});
 
 const DataRow = ({
   datasetMetrics,
@@ -178,7 +174,7 @@ const DataRow = ({
   isExpanded?: boolean;
   setIsExpanded?: CallableFunction;
 }) => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   const isDatasetRow = datasetMetrics !== undefined;
   const isOperatorRow = operatorMetrics !== undefined;
   const data = datasetMetrics || operatorMetrics;
@@ -193,15 +189,17 @@ const DataRow = ({
         {isDatasetRow &&
           setIsExpanded !== undefined &&
           (isExpanded ? (
-            <RiArrowDownSLine
+            <Box
+              component={RiArrowDownSLine}
               title={"Collapse Dataset " + datasetMetrics.dataset}
-              className={classes.icon}
+              sx={styles.icon}
               onClick={() => setIsExpanded(false)}
             />
           ) : (
-            <RiArrowRightSLine
+            <Box
+              component={RiArrowRightSLine}
               title={"Expand Dataset " + datasetMetrics.dataset}
-              className={classes.icon}
+              sx={styles.icon}
               onClick={() => setIsExpanded(true)}
             />
           ))}

@@ -1,6 +1,4 @@
-import { Typography } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Theme, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { CollapsibleSection } from "../../common/CollapsibleSection";
@@ -26,16 +24,14 @@ import {
   useServeProxyDetails,
 } from "./hook/useServeApplications";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-      padding: theme.spacing(3),
-    },
-  }),
-);
+const useStyles = (theme: Theme) => ({
+  root: {
+    padding: theme.spacing(3),
+  },
+});
 
 export const ServeProxyDetailPage = () => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   const { proxyId } = useParams();
 
   const { proxy, loading } = useServeProxyDetails(proxyId);
@@ -53,7 +49,7 @@ export const ServeProxyDetailPage = () => {
   }
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       <MainNavPageInfo
         pageInfo={
           proxy.node_id
@@ -71,12 +67,12 @@ export const ServeProxyDetailPage = () => {
         }
       />
       <ServeSystemActorDetail actor={{ type: "proxy", detail: proxy }} />
-    </div>
+    </Box>
   );
 };
 
 export const ServeControllerDetailPage = () => {
-  const classes = useStyles();
+  const styles = useStyles(useTheme());
   const { controller, loading } = useServeControllerDetails();
 
   if (loading) {
@@ -88,7 +84,7 @@ export const ServeControllerDetailPage = () => {
   }
 
   return (
-    <div className={classes.root}>
+    <Box sx={styles.root}>
       <MainNavPageInfo
         pageInfo={{
           id: "serveController",
@@ -99,7 +95,7 @@ export const ServeControllerDetailPage = () => {
       <ServeSystemActorDetail
         actor={{ type: "controller", detail: controller }}
       />
-    </div>
+    </Box>
   );
 };
 

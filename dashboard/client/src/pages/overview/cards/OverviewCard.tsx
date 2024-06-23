@@ -1,50 +1,60 @@
-import { Paper, Typography } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
-import classNames from "classnames";
+import {
+  Box,
+  Link,
+  Paper,
+  SxProps,
+  Theme,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import React, { PropsWithChildren } from "react";
 import { RiArrowRightLine } from "react-icons/ri";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-      height: 400,
-      overflow: "hidden",
-    },
-  }),
-);
+const useStyles = (theme: Theme) => ({
+  root: {
+    height: 400,
+    overflow: "hidden",
+  },
+});
 
 type OverviewCardProps = PropsWithChildren<{
   className?: string;
+  sx?: SxProps<Theme>;
 }>;
 
-export const OverviewCard = ({ children, className }: OverviewCardProps) => {
-  const classes = useStyles();
+export const OverviewCard = ({
+  children,
+  className,
+  sx,
+}: OverviewCardProps) => {
+  const styles = useStyles(useTheme());
   return (
-    <Paper className={classNames(classes.root, className)} variant="outlined">
+    <Paper
+      className={className}
+      sx={Object.assign({}, styles.root, sx)}
+      variant="outlined"
+    >
       {children}
     </Paper>
   );
 };
 
-const useLinkWithArrowStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-      color: "#036DCF",
-      textDecoration: "none",
-      display: "flex",
-      flexDirection: "row",
-      flexWrap: "nowrap",
-      alignItems: "center",
-    },
-    icon: {
-      marginLeft: theme.spacing(0.5),
-      width: 24,
-      height: 24,
-    },
-  }),
-);
+const useLinkWithArrowStyles = (theme: Theme) => ({
+  root: {
+    color: "#036DCF",
+    textDecoration: "none",
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "center",
+  },
+  icon: {
+    marginLeft: theme.spacing(0.5),
+    width: 24,
+    height: 24,
+  },
+});
 
 type LinkWithArrowProps = {
   text: string;
@@ -52,11 +62,11 @@ type LinkWithArrowProps = {
 };
 
 export const LinkWithArrow = ({ text, to }: LinkWithArrowProps) => {
-  const classes = useLinkWithArrowStyles();
+  const styles = useLinkWithArrowStyles(useTheme());
   return (
-    <Link className={classes.root} to={to}>
+    <Link component={RouterLink} sx={styles.root} to={to}>
       <Typography variant="h4">{text}</Typography>
-      <RiArrowRightLine className={classes.icon} />
+      <Box component={RiArrowRightLine} sx={styles.icon} />
     </Link>
   );
 };

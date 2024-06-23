@@ -1,23 +1,22 @@
 import { SearchOutlined } from "@mui/icons-material";
 import {
+  Box,
   Button,
   InputAdornment,
   LinearProgress,
   Switch,
   TextField,
+  Theme,
+  useTheme,
 } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
 import React, { memo, useState } from "react";
 import LogVirtualView from "../../components/LogView/LogVirtualView";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    search: {
-      margin: theme.spacing(1),
-    },
-  }),
-);
+const useStyles = (theme: Theme) => ({
+  search: {
+    margin: theme.spacing(1),
+  },
+});
 
 const useLogViewer = () => {
   const [search, setSearch] =
@@ -60,7 +59,7 @@ export const LogViewer = memo(
     onRefreshClick,
     height = 600,
   }: LogViewerProps) => {
-    const classes = useStyles();
+    const styles = useStyles(useTheme());
 
     const { search, setSearch, startTime, setStart, endTime, setEnd } =
       useLogViewer();
@@ -71,7 +70,7 @@ export const LogViewer = memo(
           <div>
             <div>
               <TextField
-                className={classes.search}
+                sx={styles.search}
                 label="Keyword"
                 InputProps={{
                   onChange: ({ target: { value } }) => {
@@ -90,7 +89,7 @@ export const LogViewer = memo(
                 label="Start Time"
                 type="datetime-local"
                 value={startTime}
-                className={classes.search}
+                sx={styles.search}
                 onChange={(val) => {
                   setStart(val.target.value);
                 }}
@@ -102,7 +101,7 @@ export const LogViewer = memo(
                 label="End Time"
                 type="datetime-local"
                 value={endTime}
-                className={classes.search}
+                sx={styles.search}
                 onChange={(val) => {
                   setEnd(val.target.value);
                 }}
@@ -110,7 +109,7 @@ export const LogViewer = memo(
                   shrink: true,
                 }}
               />
-              <div className={classes.search}>
+              <Box sx={styles.search}>
                 Reverse:{" "}
                 <Switch
                   checked={search?.revert}
@@ -118,7 +117,7 @@ export const LogViewer = memo(
                 />
                 {onRefreshClick && (
                   <Button
-                    className={classes.search}
+                    sx={styles.search}
                     variant="contained"
                     onClick={onRefreshClick}
                   >
@@ -126,7 +125,7 @@ export const LogViewer = memo(
                   </Button>
                 )}
                 <Button
-                  className={classes.search}
+                  sx={styles.search}
                   variant="contained"
                   onClick={() => {
                     setStart("");
@@ -145,7 +144,7 @@ export const LogViewer = memo(
                     Download log file
                   </Button>
                 )}
-              </div>
+              </Box>
             </div>
             <LogVirtualView
               height={height}
