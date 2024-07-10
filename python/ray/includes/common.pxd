@@ -421,6 +421,8 @@ cdef extern from "ray/gcs/gcs_client/gcs_client.h" nogil:
         CRayStatus GetAllNodeInfo(
             int64_t timeout_ms, c_vector[CGcsNodeInfo]& result)
         CRayStatus GetAllJobInfo(
+            const c_vector[c_string]& job_ids,
+            const c_vector[c_string]& submission_ids,
             int64_t timeout_ms, c_vector[CJobTableData]& result)
         CRayStatus GetAllResourceUsage(
             int64_t timeout_ms, c_string& serialized_reply)

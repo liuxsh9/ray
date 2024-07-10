@@ -161,7 +161,21 @@ void GcsJobManager::HandleGetAllJobInfo(rpc::GetAllJobInfoRequest request,
     RAY_LOG(DEBUG) << "Getting job info with limit " << limit << ".";
   }
 
-  auto on_done = [this, reply, send_reply_callback, limit](
+  absl::flat_hash_set<JobID> job_ids;
+  if (request.job_ids_size() > 0) {
+    for (const auto &job_id : request.job_ids()) {
+      job_ids.insert(JobID::FromBinary(job_id));
+    }
+  }
+
+  absl::flat_hash_set<std::string> submission_ids;
+  if (request.submission_ids_size() > 0) {
+    for (const auto &submission_id : request.submission_ids()) {
+      submission_ids.insert(submission_id);
+    }
+  }
+
+  auto on_done = [this, reply, send_reply_callback, limit, job_ids, submission_ids](
                      const absl::flat_hash_map<JobID, JobTableData> &result) {
     // Internal KV keys for jobs that were submitted via the Ray Job API.
     std::vector<std::string> job_api_data_keys;
@@ -193,16 +207,28 @@ void GcsJobManager::HandleGetAllJobInfo(rpc::GetAllJobInfoRequest request,
       if (i >= limit) {
         break;
       }
-      reply->add_job_info_list()->CopyFrom(data.second);
+
+      if (!job_ids.empty() && !job_ids.contains(data.first)) {
+        continue;
+      }
       auto &metadata = data.second.config().metadata();
       auto iter = metadata.find("job_submission_id");
       if (iter != metadata.end()) {
         // This job was submitted via the Ray Job API, so it has JobInfo in the kv.
         std::string job_submission_id = iter->second;
+        if (!submission_ids.empty() && !submission_ids.contains(job_submission_id)) {
+          continue;
+        }
         std::string job_data_key = JobDataKey(job_submission_id);
         job_api_data_keys.push_back(job_data_key);
         job_data_key_to_indices[job_data_key].push_back(i);
+      } else {
+        if (!submission_ids.empty()) {
+          continue;
+        }
       }
+
+      reply->add_job_info_list()->CopyFrom(data.second);
 
       WorkerID worker_id = WorkerID::FromBinary(data.second.driver_address().worker_id());
 

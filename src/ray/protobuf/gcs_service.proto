@@ -39,6 +39,10 @@ message MarkJobFinishedReply {
 message GetAllJobInfoRequest {
   // The number of jobs to return. If not specified, return all jobs.
   optional int32 limit = 1;
+  // Query job info for the specified job_ids. If empty, return all jobs.
+  repeated bytes job_ids = 2;
+  // Query job info for the specified submission_ids. If empty, return all jobs.
+  repeated string submission_ids = 3;
 }
 
 message GetAllJobInfoReply {

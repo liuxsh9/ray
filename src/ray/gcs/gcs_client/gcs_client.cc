@@ -502,7 +502,9 @@ Status PythonGcsClient::GetAllNodeInfo(int64_t timeout_ms,
   return Status::RpcError(status.error_message(), status.error_code());
 }
 
-Status PythonGcsClient::GetAllJobInfo(int64_t timeout_ms,
+Status PythonGcsClient::GetAllJobInfo(const std::vector<std::string> &job_ids,
+                                      const std::vector<std::string> &submission_ids,
+                                      int64_t timeout_ms,
                                       std::vector<rpc::JobTableData> &result) {
   grpc::ClientContext context;
   PrepareContext(context, timeout_ms);
@@ -511,6 +513,16 @@ Status PythonGcsClient::GetAllJobInfo(int64_t timeout_ms,
   rpc::GetAllJobInfoRequest request;
   rpc::GetAllJobInfoReply reply;
 
+  for (const auto &job_id : job_ids) {
+    if (!job_id.empty()) {
+      request.add_job_ids(JobID::FromHex(job_id).Binary());
+    }
+  }
+  for (const auto &submission_id : submission_ids) {
+    if (!submission_id.empty()) {
+      request.add_submission_ids(submission_id);
+    }
+  }
   grpc::Status status = job_info_stub_->GetAllJobInfo(&context, request, &reply);
   if (status.ok()) {
     if (reply.status().code() == static_cast<int>(StatusCode::OK)) {

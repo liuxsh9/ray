@@ -137,7 +137,10 @@ async def parse_and_validate_request(
 
 
 async def get_driver_jobs(
-    gcs_aio_client: GcsAioClient, timeout: Optional[int] = None
+    gcs_aio_client: GcsAioClient,
+    job_ids: List[str] = [],
+    submission_ids: List[str] = [],
+    timeout: Optional[int] = None,
 ) -> Tuple[Dict[str, JobDetails], Dict[str, DriverInfo]]:
     """Returns a tuple of dictionaries related to drivers.
 
@@ -146,7 +149,9 @@ async def get_driver_jobs(
     It's keyed by the submission job's submission id.
     Only the last driver of a submission job is returned.
     """
-    job_infos = await gcs_aio_client.get_all_job_info(timeout=timeout)
+    job_infos = await gcs_aio_client.get_all_job_info(
+        job_ids=job_ids, submission_ids=submission_ids, timeout=timeout
+    )
     # Sort jobs from GCS to follow convention of returning only last driver
     # of submission job.
     sorted_job_infos = sorted(
@@ -206,7 +211,13 @@ async def find_job_by_ids(
     Attempts to find the job with a given submission_id or job id.
     """
     # First try to find by job_id
-    driver_jobs, submission_job_drivers = await get_driver_jobs(gcs_aio_client)
+    driver_jobs, submission_job_drivers = await get_driver_jobs(
+        gcs_aio_client, job_ids=[job_or_submission_id]
+    )
+    if len(driver_jobs) == 0 and len(submission_job_drivers) == 0:
+        driver_jobs, submission_job_drivers = await get_driver_jobs(
+            gcs_aio_client, submission_ids=[job_or_submission_id]
+        )
     job = driver_jobs.get(job_or_submission_id)
     if job:
         return job
@@ -250,7 +261,9 @@ async def find_jobs_by_job_ids(
 
     This only accepts job ids and not submission ids.
     """
-    driver_jobs, submission_job_drivers = await get_driver_jobs(gcs_aio_client)
+    driver_jobs, submission_job_drivers = await get_driver_jobs(
+        gcs_aio_client, job_ids=job_ids
+    )
 
     # Filter down to the request job_ids
     driver_jobs = {key: job for key, job in driver_jobs.items() if key in job_ids}

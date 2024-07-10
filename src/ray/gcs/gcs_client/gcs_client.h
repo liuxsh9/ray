@@ -284,7 +284,10 @@ class RAY_EXPORT PythonGcsClient {
 
   Status PinRuntimeEnvUri(const std::string &uri, int expiration_s, int64_t timeout_ms);
   Status GetAllNodeInfo(int64_t timeout_ms, std::vector<rpc::GcsNodeInfo> &result);
-  Status GetAllJobInfo(int64_t timeout_ms, std::vector<rpc::JobTableData> &result);
+  Status GetAllJobInfo(const std::vector<std::string> &job_ids,
+                       const std::vector<std::string> &submission_ids,
+                       int64_t timeout_ms,
+                       std::vector<rpc::JobTableData> &result);
   Status GetAllResourceUsage(int64_t timeout_ms, std::string &serialized_reply);
   // For rpc::autoscaler::AutoscalerStateService
   Status RequestClusterResourceConstraint(
