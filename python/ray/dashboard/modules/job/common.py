@@ -276,25 +276,19 @@ class JobInfoStorageClient:
             namespace=ray_constants.KV_NAMESPACE_JOB,
             timeout=timeout,
         )
-        job_ids_with_prefixes = [
-            job_id.decode() for job_id in raw_job_ids_with_prefixes
-        ]
-        job_ids = []
-        for job_id_with_prefix in job_ids_with_prefixes:
-            assert job_id_with_prefix.startswith(
-                self.JOB_DATA_KEY_PREFIX
-            ), "Unexpected format for internal_kv key for Job submission"
-            job_ids.append(job_id_with_prefix[len(self.JOB_DATA_KEY_PREFIX) :])
 
-        async def get_job_info(job_id: str):
-            job_info = await self.get_info(job_id, timeout)
-            return job_id, job_info
+        obj_info_dict = await self._gcs_aio_client.internal_kv_multi_get(
+            raw_job_ids_with_prefixes,
+            namespace=ray_constants.KV_NAMESPACE_JOB,
+            timeout=timeout,
+        )
 
         return {
-            job_id: job_info
-            for job_id, job_info in await asyncio.gather(
-                *[get_job_info(job_id) for job_id in job_ids]
+            job_id.decode()[len(self.JOB_DATA_KEY_PREFIX) :]: JobInfo.from_json(
+                json.loads(job_info)
             )
+            for job_id, job_info in obj_info_dict.items()
+            if job_info is not None
         }
 
 
