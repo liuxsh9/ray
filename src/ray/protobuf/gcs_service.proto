@@ -39,6 +39,11 @@ message MarkJobFinishedReply {
 message GetAllJobInfoRequest {
   // The number of jobs to return. If not specified, return all jobs.
   optional int32 limit = 1;
+
+  message Filters {
+    optional bool is_dead = 1;
+  }
+  optional Filters filters = 2;
 }
 
 message GetAllJobInfoReply {

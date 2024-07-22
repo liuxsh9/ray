@@ -161,7 +161,7 @@ void GcsJobManager::HandleGetAllJobInfo(rpc::GetAllJobInfoRequest request,
     RAY_LOG(DEBUG) << "Getting job info with limit " << limit << ".";
   }
 
-  auto on_done = [this, reply, send_reply_callback, limit](
+  auto on_done = [this, reply, send_reply_callback, limit, request](
                      const absl::flat_hash_map<JobID, JobTableData> &result) {
     // Internal KV keys for jobs that were submitted via the Ray Job API.
     std::vector<std::string> job_api_data_keys;
@@ -187,11 +187,22 @@ void GcsJobManager::HandleGetAllJobInfo(rpc::GetAllJobInfoRequest request,
           }
         };
 
+    const auto filter_fn = [](const rpc::GetAllJobInfoRequest::Filters &filters,
+                              const rpc::JobTableData &data) {
+      if (filters.has_is_dead()) {
+        return data.is_dead() == filters.is_dead();
+      }
+      return true;
+    };
+
     // Load the job table data into the reply.
     int i = 0;
     for (auto &data : result) {
       if (i >= limit) {
         break;
+      }
+      if (request.has_filters() && !filter_fn(request.filters(), data.second)) {
+        continue;
       }
       reply->add_job_info_list()->CopyFrom(data.second);
       auto &metadata = data.second.config().metadata();
