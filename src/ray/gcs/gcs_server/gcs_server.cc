@@ -840,8 +840,10 @@ std::shared_ptr<RedisClient> GcsServer::GetOrConnectRedis() {
 
 std::shared_ptr<StoreClient> GcsServer::GetRedisStoreClient() {
   if (redis_store_client_ == nullptr) {
-    auto redis_store_client = std::make_shared<RedisStoreClient>(GetOrConnectRedis());
-    redis_store_client_ = std::make_shared<CacheKeyStoreClient>(redis_store_client);
+    redis_store_client_ = std::make_shared<RedisStoreClient>(GetOrConnectRedis());
+    if (RayConfig::instance().use_redis_keys_cache()) {
+      redis_store_client_ = std::make_shared<CacheKeyStoreClient>(redis_store_client_);
+    }
   }
   return redis_store_client_;
 }
