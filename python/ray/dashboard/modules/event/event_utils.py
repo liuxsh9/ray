@@ -144,7 +144,12 @@ def monitor_events(
         assert isinstance(
             file, str
         ), f"File should be a str, but a {type(file)}({file}) found"
-        fd = os.open(file, os.O_RDONLY)
+
+        try:
+            fd = os.open(file, os.O_RDONLY)
+        except FileNotFoundError:
+            return []
+
         try:
             stat = os.stat(fd)
             # Check the file size to avoid raising the exception

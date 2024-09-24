@@ -3,6 +3,9 @@ import concurrent.futures
 import io
 import logging
 import os
+import re
+import sys
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -12,8 +15,10 @@ import ray.dashboard.modules.log.log_consts as log_consts
 import ray.dashboard.modules.log.log_utils as log_utils
 import ray.dashboard.optional_utils as dashboard_optional_utils
 import ray.dashboard.utils as dashboard_utils
-from ray._private.ray_constants import env_integer
+from ray._private.ray_constants import env_bool, env_integer
 from ray.core.generated import reporter_pb2, reporter_pb2_grpc
+
+import psutil
 
 logger = logging.getLogger(__name__)
 routes = dashboard_optional_utils.DashboardAgentRouteTable
@@ -27,6 +32,11 @@ DEFAULT_KEEP_ALIVE_INTERVAL_SEC = 1
 RAY_DASHBOARD_LOG_TASK_LOG_SEARCH_MAX_WORKER_COUNT = env_integer(
     "RAY_DASHBOARD_LOG_TASK_LOG_SEARCH_MAX_WORKER_COUNT", default=2
 )
+
+WORKER_LOG_NAME_PATTERN = (
+    r"^(?:python-core-)?worker-[\da-f]{56}(?:-[\da-f]{8})?[_\-](\d+)\.(?:log|out|err)$"
+)
+EVENT_LOG_NAME_PATTERN = r"^event_CORE_WORKER_(\d+)\.log$"
 
 
 def find_offset_of_content_in_file(
@@ -248,7 +258,46 @@ class LogAgent(dashboard_utils.DashboardAgentModule):
         routes.static("/logs", self._dashboard_agent.log_dir, show_index=True)
 
     async def run(self, server):
-        pass
+        auto_clean_worker_logs = env_bool("Ray_auto_clean_worker_logs", False)
+        last_modified_time_threshold = env_integer(
+            "RAY_last_modified_time_threshold", 30 * 60
+        )
+        worker_log_cleanup_interval = env_integer(
+            "RAY_worker_log_cleanup_interval", 30 * 60
+        )
+        while auto_clean_worker_logs:
+            start = time.time()
+            del_file_count = 0
+            for root, dirs, files in os.walk(self._dashboard_agent.log_dir):
+                for logfile in files:
+                    try:
+                        match = re.match(WORKER_LOG_NAME_PATTERN, logfile) or re.match(
+                            EVENT_LOG_NAME_PATTERN, logfile
+                        )
+                        if not match:
+                            continue
+
+                        worker_pid = int(match.group(1))
+                        if psutil.pid_exists(worker_pid):
+                            continue
+
+                        file_path = os.path.join(root, logfile)
+                        file_mtime = os.path.getmtime(file_path)
+
+                        if time.time() - file_mtime > last_modified_time_threshold:
+                            os.remove(file_path)
+                            del_file_count += 1
+                    except Exception:
+                        logger.info(
+                            f"Failed to delete the {logfile} file.",
+                            exc_info=sys.exc_info(),
+                        )
+                    await asyncio.sleep(0)
+            logger.info(
+                f"Delete {del_file_count} worker and event logs,"
+                f" cost {time.time() - start:.2f} second."
+            )
+            await asyncio.sleep(worker_log_cleanup_interval)
 
     @staticmethod
     def is_minimal_module():
