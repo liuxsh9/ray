@@ -617,24 +617,42 @@ Under the hood, the accelerator type option is implemented as a :ref:`custom res
 This forces the task or actor to be placed on a node with that particular accelerator type available.
 This also lets the multi-node-type autoscaler know that there is demand for that type of resource, potentially triggering the launch of new nodes providing that accelerator.
 
-.. testcode::
-    :hide:
+.. tab-set::
 
-    ray.shutdown()
-    import ray.util.accelerators
-    import ray._private.ray_constants as ray_constants
+    .. tab-item:: Nvidia GPU
+        :sync: Nvidia GPU
 
-    v100_resource_name = f"{ray_constants.RESOURCE_CONSTRAINT_PREFIX}{ray.util.accelerators.NVIDIA_TESLA_V100}"
-    ray.init(num_gpus=4, resources={v100_resource_name: 1})
+        .. testcode::
+            :hide:
 
-.. testcode::
+            ray.shutdown()
+            import ray.util.accelerators
+            import ray._private.ray_constants as ray_constants
 
-    from ray.util.accelerators import NVIDIA_TESLA_V100
+            v100_resource_name = f"{ray_constants.RESOURCE_CONSTRAINT_PREFIX}{ray.util.accelerators.NVIDIA_TESLA_V100}"
+            ray.init(num_gpus=4, resources={v100_resource_name: 1})
 
-    @ray.remote(num_gpus=1, accelerator_type=NVIDIA_TESLA_V100)
-    def train(data):
-        return "This function was run on a node with a Tesla V100 GPU"
+        .. testcode::
 
-    ray.get(train.remote(1))
+            from ray.util.accelerators import NVIDIA_TESLA_V100
+
+            @ray.remote(num_gpus=1, accelerator_type=NVIDIA_TESLA_V100)
+            def train(data):
+                return "This function was run on a node with a Tesla V100 GPU"
+
+            ray.get(train.remote(1))
+
+    .. tab-item:: Ascend NPU
+        :sync: Ascend NPU
+
+        .. testcode::
+
+            import ray
+
+            @ray.remote(resources={"NPU": 1}, accelerator_type="Ascend910B")
+            def train(data):
+                return "This function was run on a node with a Ascend 910B NPU"
+
+            ray.get(train.remote(1))
 
 See :ref:`ray.util.accelerators <accelerator_types>` for available accelerator types.
