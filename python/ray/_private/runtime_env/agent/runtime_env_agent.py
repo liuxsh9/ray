@@ -508,12 +508,13 @@ class RuntimeEnvAgent:
                 self._reference_table.decrease_reference(
                     runtime_env, serialized_env, request.source_process
                 )
-            # Add the result to env cache.
-            self._env_cache[serialized_env] = CreatedEnvResult(
-                successful,
-                serialized_context if successful else error_message,
-                creation_time_ms,
-            )
+            else:
+                # Add the result to env cache.
+                self._env_cache[serialized_env] = CreatedEnvResult(
+                    successful,
+                    serialized_context if successful else error_message,
+                    creation_time_ms,
+                )
             # Reply the RPC
             return runtime_env_agent_pb2.GetOrCreateRuntimeEnvReply(
                 status=runtime_env_agent_pb2.AGENT_RPC_STATUS_OK
