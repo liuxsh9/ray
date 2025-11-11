@@ -12,6 +12,7 @@ import ray._private.runtime_env.agent.runtime_env_consts as runtime_env_consts
 from ray._common.utils import get_or_create_event_loop
 from ray._private.ray_constants import (
     DEFAULT_RUNTIME_ENV_TIMEOUT_SECONDS,
+    env_integer,
 )
 from ray._private.ray_logging import setup_component_logger
 from ray._private.runtime_env.conda import CondaPlugin
@@ -195,6 +196,9 @@ class RuntimeEnvAgent:
 
         self._runtime_env_dir = runtime_env_dir
         self._per_job_logger_cache = dict()
+        self._max_job_logger_cache_count = env_integer(
+            "RAY_RUNTIME_MAX_JOB_LOGGER_CACHE_COUNT", default=5000
+        )
         # Cache the results of creating envs to avoid repeatedly calling into
         # conda and other slow calls.
         self._env_cache: Dict[str, CreatedEnvResult] = dict()
@@ -289,15 +293,38 @@ class RuntimeEnvAgent:
             else:
                 delete_runtime_env()
 
+    def check_job_logger_count_limit(self):
+        try:
+            while len(self._per_job_logger_cache) >= self._max_job_logger_cache_count:
+                cache_job_id, logger = min(
+                    self._per_job_logger_cache.items(), key=lambda kv: kv[1].ts
+                )
+                for handler in logger.handlers:
+                    if isinstance(handler, logging.FileHandler):
+                        handler.close()
+                        logger.removeHandler(handler)
+                del self._per_job_logger_cache[cache_job_id]
+                self._logger.debug(
+                    f"The number of job_loggers exceeds {self._max_job_logger_cache_count}, "
+                    f"delete the {logger.name} logger."
+                )
+        except Exception as ex:
+            self._logger.error(
+                f"An Exception occcurs during job_logger clearance."
+                f"Full traceback:\n{traceback.format_exc()}"
+            )
+
     def get_or_create_logger(self, job_id: bytes, log_files: List[str]):
         job_id = job_id.decode()
         if job_id not in self._per_job_logger_cache:
+            self.check_job_logger_count_limit()
             params = self._logging_params.copy()
             params["filename"] = [f"runtime_env_setup-{job_id}.log", *log_files]
             params["logger_name"] = f"runtime_env_{job_id}"
             params["propagate"] = False
             per_job_logger = setup_component_logger(**params)
             self._per_job_logger_cache[job_id] = per_job_logger
+        self._per_job_logger_cache[job_id].ts = time.time()
         return self._per_job_logger_cache[job_id]
 
     async def GetOrCreateRuntimeEnv(self, request):
